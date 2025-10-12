@@ -1,0 +1,20 @@
+{
+  "DialogueRows": [
+    {
+      "DialogueIndex": 0,
+      "Speaker": "Hero",
+      "Line": "안녕하세요, 처음 뵙겠습니다.",
+      "IllustIndex": 1,
+      "IllustPosition": 0,
+      "IllustFilpX": false
+    },
+    {
+      "DialogueIndex": 1,
+      "Speaker": "NPC",
+      "Line": "오! 드디어 오셨군요.",
+      "IllustIndex": 2,
+      "IllustPosition": 1,
+      "IllustFilpX": false
+    }
+  ]
+}
