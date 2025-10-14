@@ -27,7 +27,7 @@ namespace GameSystems.GameFlows.MainStageScene
 
         // 자동 재생 기능 코루틴.
         private Coroutine AutoCoroutine;
-        private float AutoDuration;
+        private float AutoDuration = 3f;
 
         // 연출할 목록
         private List<SequenceStepData> SequenceStepDatas;
@@ -70,7 +70,9 @@ namespace GameSystems.GameFlows.MainStageScene
                             new ActionDirectionData("DefaultCutscene", ActionType.FadeOut, string.Empty, "1")),
 
                         new SequenceStepData(0, SequenceDataType.BackGroundActionType, false, true,
-                            new ActionDirectionData("DefaultBackGround", ActionType.FadeIn, string.Empty, "1")),
+                            new ActionDirectionData("DefaultBackGround", ActionType.FadeIn, string.Empty, "0.5")),
+                        new SequenceStepData(0, SequenceDataType.CanvasUIUXActionType, false, true,
+                            new ActionDirectionData("DefaultDialogueUIUX", ActionType.FadeIn, string.Empty, "0.5")),
 
                         new SequenceStepData(0, SequenceDataType.ActorActionType, false, true,
                             new FaceDirectionData("DefaultCharacter01", FaceType.Default),  new ActionDirectionData("DefaultCharacter01", ActionType.FadeIn, "8", "1")),
@@ -100,7 +102,9 @@ namespace GameSystems.GameFlows.MainStageScene
 
 
                         new SequenceStepData(0, SequenceDataType.CanvasUIUXActionType, false, true,
-                            new ActionDirectionData("DefaultTextPanel", ActionType.FadeOut, string.Empty, "1")),
+                            new ActionDirectionData("DefaultTextPanel", ActionType.FadeOut, string.Empty, "0.5")),
+                        new SequenceStepData(0, SequenceDataType.CanvasUIUXActionType, false, true,
+                            new ActionDirectionData("DefaultDialogueUIUX", ActionType.FadeOut, string.Empty, "0.5")),
                         new SequenceStepData(0, SequenceDataType.BackGroundActionType, false, true,
                             new ActionDirectionData("DefaultBackGround", ActionType.FadeOut, string.Empty, "1")),
                     },
@@ -251,17 +255,13 @@ namespace GameSystems.GameFlows.MainStageScene
             while (true)
             {
                 //  현재 재생 중인 코루틴이 있으면 그냥 넘어감.
-                if(this.ActionCoroutine != null || this.TextDisplayCoroutine != null)
-                {
-                    yield return Time.deltaTime;
-                }
-                else
+                if(this.ActionCoroutine == null && this.TextDisplayCoroutine == null)
                 {
                     // 충분히 기다렸으면, 다음 대화 연출 수행 요청.
                     if (waitedTime >= this.AutoDuration)
                     {
                         this.StartDialogueDirectingSystem();
-
+                        waitedTime = 0;
                     }
                     // 현재 재생 중인 코루틴이 없으면 시간 증가.
                     else
@@ -269,6 +269,8 @@ namespace GameSystems.GameFlows.MainStageScene
                         waitedTime += Time.deltaTime;
                     }
                 }
+
+                yield return Time.deltaTime;
             }
         }
         public void OnClickedSkipButton()
@@ -300,424 +302,4 @@ namespace GameSystems.GameFlows.MainStageScene
                 this.StartDialogueDirectingSystem();
         }
     }
-
-
-
-/*    public interface IDialogueSystemGameFlow
-    {
-        public void OnClicked_Mouse();
-        public void OnClickedLogButton();
-        public void OnClickedAutoButton();
-        public void OnClickedSkipButton();
-
-        public void OnClicked_ExitLogButton();
-    }
-
-    public class DialogueSystemGameFlow : MonoBehaviour, IGameFlow, IDialogueSystemGameFlow
-    {
-        // Cutscene 관련 제어.
-        private IDialogueCutsceneMediatorView DialogueCutsceneMediatorView;
-        // Default UIUX 관련 제어.
-        private IDialogueDefaultMediatorView DialogueDefaultMediatorView;
-        // Text관련 제어
-        private IDialogueTextMediatorView DialogueTextMediatorView;
-        // 일러스트 관련 제어
-        private IDialogueIllustMediatorView DialogueIllustMediatorView;
-
-        private Coroutine DialogueMainFlow;
-        private Coroutine sequenceCoroutine;
-
-        private Coroutine autoCoroutine;
-
-        // 값이 클수록 출력 속도가 빨라짐.
-        [SerializeField] private float charsPerSecond = 20f; // 초당 몇 글자
-        [SerializeField] private float AutoDuration = 2f;
-
-
-        // 테스트 중에 사용하는 값들.
-        [SerializeField] private UnityEngine.UI.Button test;
-
-        public List<SequenceStepData> sequenceStepDatas = new();
-        private SequenceStepData currentSequenceStepData;
-
-        private void Awake()
-        {
-            var LocalRepository = Repository.MainStageSceneRepository.Instance;
-            var GlobalRepository = Repository.GlobalSceneRepository.Instance;
-
-            // 등록
-            LocalRepository.GameFlow_LazyReferenceRepository.RegisterReference<DialogueSystemGameFlow>(this);
-
-            // 참조
-            // Cutscene 관련
-            this.DialogueCutsceneMediatorView = LocalRepository.
-                Entity_LazyReferenceRepository.GetOrWaitReference<DialogueCutsceneMediatorView>(x => this.DialogueCutsceneMediatorView = x);
-            // Default UIUX 관련
-            this.DialogueDefaultMediatorView = LocalRepository.
-                Entity_LazyReferenceRepository.GetOrWaitReference<DialogueDefaultMediatorView>(x => this.DialogueDefaultMediatorView = x);
-            // Text 관련
-            this.DialogueTextMediatorView = LocalRepository.
-                Entity_LazyReferenceRepository.GetOrWaitReference<DialogueTextMediatorView>(x => this.DialogueTextMediatorView = x);
-            // 일러스트 관련.
-            this.DialogueIllustMediatorView = LocalRepository.
-                Entity_LazyReferenceRepository.GetOrWaitReference<DialogueIllustMediatorView>(x => this.DialogueIllustMediatorView = x);
-
-            test.onClick.AddListener(this.OperateDialogueSystem);
-            this.TemporaryScriptsSetting();
-        }
-
-        private void TemporaryScriptsSetting()
-        {
-            this.SequenceSteps.Enqueue(
-                new SequenceStep(index: 0, sequenceStepType: SequenceStepType.UIUXAction,
-                targetName: new string[] { "TitleBackGroundUIUX" },
-                actionType: ActionType.FadeIn, waitTime: 1f,
-                isSkipable: false, isAutoable: true)
-                );
-            this.SequenceSteps.Enqueue(
-                new SequenceStep(index: 1, sequenceStepType: SequenceStepType.UIUXAction,
-                targetName: new string[] { "TitleUIUX" },
-                actionType: ActionType.FadeIn, waitTime: 1f,
-                isSkipable: false, isAutoable: true)
-                );
-            this.SequenceSteps.Enqueue(
-                new SequenceStep(index: 1, sequenceStepType: SequenceStepType.UIUXAction,
-                targetName: new string[] { "TitleBackGroundUIUX", "TitleUIUX" },
-                actionType: ActionType.FadeOut, waitTime: 1f,
-                isSkipable: false, isAutoable: true)
-                );
-
-            this.SequenceSteps.Enqueue(
-                new SequenceStep(index : 0, sequenceStepType : SequenceStepType.ActorAction,
-                targetName: new string[] { "Illust0000" }, faceNumber : 0,
-                actionType : ActionType.FadeIn, positionLayer : 2, waitTime : 1f,
-                isSkipable : false, isAutoable : true)
-                );
-            this.SequenceSteps.Enqueue(
-                new SequenceStep(index: 1, sequenceStepType: SequenceStepType.ActorAction,
-                targetName: new string[] { "Illust0001" }, faceNumber: 0,
-                actionType: ActionType.DirectShow, positionLayer: 10, waitTime: 0.5f,
-                isSkipable: false, isAutoable: true)
-                );
-            this.SequenceSteps.Enqueue(
-                new SequenceStep(index: 2, sequenceStepType: SequenceStepType.ActorAction,
-                targetName: new string[] { "Illust0001" }, faceNumber: 0,
-                actionType: ActionType.Move, positionLayer: 10_8, waitTime: 0.5f,
-                isSkipable: false, isAutoable: true)
-                );
-
-            this.SequenceSteps.Enqueue(
-                new SequenceStep(index : 3, sequenceStepType : SequenceStepType.UIUXAction,
-                targetName: new string[] { "TextUIUX" },
-                actionType : ActionType.FadeIn, waitTime : 1f,
-                isSkipable : false, isAutoable :  true)
-                );
-
-            this.SequenceSteps.Enqueue(
-                new SequenceStep(index: 4, sequenceStepType: SequenceStepType.Say,
-                targetName: new string[] { "Illust0000" }, faceNumber: 0,
-                speaker : "Actor01", content : "안녕하세요! 임시 대화입니다. 일정 속도로 한 글자씩 나타나요 :)",
-                isSkipable: true, isAutoable: false)
-                );
-            this.SequenceSteps.Enqueue(
-                new SequenceStep(index: 5, sequenceStepType: SequenceStepType.Say,
-                targetName: new string[] { "Illust0001" }, faceNumber: 0,
-                speaker : "Actor02", content : "안녕하세요! 두 번째 임시 대화입니다.:)",
-                isSkipable: true, isAutoable: false)
-                );
-            this.SequenceSteps.Enqueue(
-                new SequenceStep(index: 6, sequenceStepType: SequenceStepType.Say,
-                targetName: new string[] { "Illust0001" }, faceNumber: 0,
-                speaker : "Actor02", content : "자 이제 사라져 볼게.",
-                isSkipable: true, isAutoable: false)
-                );
-            this.SequenceSteps.Enqueue(
-                new SequenceStep(index: 7, sequenceStepType: SequenceStepType.Say,
-                 targetName: new string[] { }, faceNumber: 0,
-                speaker : string.Empty, content : string.Empty,
-                isSkipable: true, isAutoable: true)
-                );
-
-            this.SequenceSteps.Enqueue(
-                new SequenceStep(index: 0, sequenceStepType: SequenceStepType.ActorAction,
-                targetName: new string[] { "Illust0000" }, faceNumber: 0,
-                actionType: ActionType.Move, positionLayer: 2_0, waitTime: 1f,
-                isSkipable: false, isAutoable: true)
-                );
-            this.SequenceSteps.Enqueue(
-                new SequenceStep(index: 0, sequenceStepType: SequenceStepType.ActorAction,
-                targetName: new string[] { "Illust0000" }, faceNumber: 0,
-                actionType: ActionType.DirectHide, positionLayer: 0, waitTime: 1f,
-                isSkipable: false, isAutoable: true)
-                );
-            this.SequenceSteps.Enqueue(
-                new SequenceStep(index: 0, sequenceStepType: SequenceStepType.ActorAction,
-                targetName: new string[] { "Illust0001" }, faceNumber: 0,
-                actionType: ActionType.FadeOut, positionLayer: 8, waitTime: 1f,
-                isSkipable: false, isAutoable: true)
-                );
-
-            this.SequenceSteps.Enqueue(
-                new SequenceStep(index: 3, sequenceStepType: SequenceStepType.UIUXAction,
-                targetName: new string[] { "TextUIUX" },
-                actionType: ActionType.FadeOut, waitTime: 1f,
-                isSkipable: false, isAutoable: true)
-                );
-        }
-
-        // DialogueSystem 시작.
-        public void OperateDialogueSystem()
-        {
-            if (this.DialogueMainFlow != null) return;
-
-            if (this.sequenceStepDatas.Count <= 0)
-            {
-                Debug.Log($"대화 Sequence 다 끝남.");
-                return;
-            }
-
-            this.currentSequenceStepData = this.sequenceStepDatas[0];
-            this.sequenceStepDatas.RemoveAt(0);
-
-            switch (this.currentSequenceStepData.SequenceDataType)
-            {
-                case SequenceDataType.ConversationDirectionType:
-                    this.DialogueMainFlow = StartCoroutine();
-                    break;
-                case SequenceDataType.UIUXActionDirectionType:
-                    break;
-                case SequenceDataType.ActorActionDirectionType:
-                    break;
-                case SequenceDataType.IllustActionType:
-                    break;
-                case SequenceDataType.ForkDirectionType:
-                    break;
-            }
-        }
-
-        private IEnumerator DialogueOperation()
-        {
-            // Cutscene 흐름 실행.
-            yield return StartCoroutine(this.CutsceneFlowOperation(1f, 1f, 1f, 1f, 0.5f));  
-
-            // 잠시 대기
-            yield return new WaitForSeconds(0.2f);
-
-            // 대화 시스템을 위한 Default UIUX 출력 Flow
-            yield return StartCoroutine(this.DialogueFlowStartOperation());
-
-            // 잠시 대기
-            yield return new WaitForSeconds(0.1f);
-
-            this.DialogueSequenceSetpOperation();
-
-            this.DialogueMainFlow = null;
-        }
-
-        // Cutscene Flow
-        private IEnumerator CutsceneFlowOperation(float backGroundFadeOutDuration, float titleFadeOutDuration, float waitDuration, float backGroundFadeInDuration, float titleFadeInDuration)
-        {
-            // 검은 화면 FadeIn
-            yield return StartCoroutine(this.DialogueCutsceneMediatorView.FadeIn_CutsceneBackGround(backGroundFadeOutDuration));
-            // Title FadeIn
-            yield return StartCoroutine(this.DialogueCutsceneMediatorView.FadeIn_CutsceneTitle(titleFadeOutDuration));
-
-            // 잠시 대기
-            yield return new WaitForSeconds(waitDuration);
-
-            // 검은 화면과 Title FadeOut
-            StartCoroutine(this.DialogueCutsceneMediatorView.FadeOut_CutsceneBackGround(backGroundFadeInDuration));
-            StartCoroutine(this.DialogueCutsceneMediatorView.FadeOut_CutsceneTitle(titleFadeInDuration));
-            yield return new WaitForSeconds(Mathf.Max(backGroundFadeInDuration, titleFadeInDuration));
-        }
-        private IEnumerator DialogueFlowStartOperation()
-        {
-            // 대화 시스템을 위한 Default UIUX 출력 Flow
-            yield return StartCoroutine(this.DialogueDefaultMediatorView.DefaultUIUX_FadeIn(1f));
-        }
-        private IEnumerator DialogueFlowEndOperation()
-        {
-            // 대화 시스템을 위한 Default UIUX 비출력 Flow
-            yield return StartCoroutine(this.DialogueDefaultMediatorView.DefaultUIUX_FadeOut(1f));
-        }
-
-        // 대화 시스템 진행.
-        // 연출형태에 따라서, 다른 코루틴 실행.
-        private void DialogueSequenceSetpOperation()
-        {
-            if (this.SequenceSteps.Count <= 0)
-            {
-                StartCoroutine(this.DialogueFlowEndOperation());
-                return;
-            }
-
-            // 다음 문자열 시행.
-            this.currentSequenceStep = this.SequenceSteps.Dequeue();
-
-            switch (this.currentSequenceStep.SequenceStepType)
-            {
-                case SequenceStepType.UIUXAction:
-                    this.sequenceCoroutine = StartCoroutine(this.OperateDialogueTextUIUXAction());
-                    break;
-                case SequenceStepType.Say:
-                    this.DialogueIllustMediatorView.SetSpeakerColor(this.currentSequenceStep.TargetName);
-                    this.DialogueTextMediatorView.UpdateSpeaker(this.currentSequenceStep.Speaker);
-                    this.sequenceCoroutine = StartCoroutine(this.OperateDialogueTextDisplay(this.currentSequenceStep.Content));
-                    break;
-                case SequenceStepType.ActorAction:
-                    this.DialogueIllustMediatorView.SetSpeakerColor(this.currentSequenceStep.TargetName);
-                    this.DialogueTextMediatorView.UpdateSpeaker(this.currentSequenceStep.Speaker);
-                    this.sequenceCoroutine = StartCoroutine(this.OperateDialogueIllustAction());
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        public void OnClicked_Mouse()
-        {
-            // 애니메이션 작동이 들어가는 경우, Skipable이 false가 됩니다. 즉 마우스 입력을 무시합니다.
-            // skip이 가능한 경우, 코루틴을 중지하고 대사를 끝까지 출력해 줍니다.
-            // 코루틴이 이미 중지된 상태라면, 다음 Sequence를 수행합니다.
-            if (this.currentSequenceStep.IsSkipable)
-            {
-                // Type 중이 아니라면, 다음 시퀀스 스탭 시작.
-                if (this.sequenceCoroutine == null)
-                {
-                    this.DialogueSequenceSetpOperation();
-                }
-                // Type 중이라면, 중지 및 전부 출력.
-                else
-                {
-                    StopCoroutine(this.sequenceCoroutine);
-
-                    this.DialogueTextMediatorView.UpdateContentText(this.currentSequenceStep.Content);
-                    this.currentSequenceStep = null;
-                    this.sequenceCoroutine = null;
-                }
-            }
-        }
-
-        public void OnClickedLogButton()
-        {
-//            this.DialogueMediatorView.Dialogue_LogPanel_Activation(true);
-        }
-        public void OnClicked_ExitLogButton()
-        {
-//            this.DialogueMediatorView.Dialogue_LogPanel_Activation(false);
-        }
-
-        public void OnClickedAutoButton()
-        {
-            if (this.autoCoroutine == null)
-            {
-                this.autoCoroutine = StartCoroutine(this.OperateDialogueAutoDisplay());
-            }
-            else
-            {
-                StopCoroutine(this.autoCoroutine);
-                this.autoCoroutine = null;
-            }
-        }
-        public void OnClickedSkipButton()
-        {
-            Debug.Log($"OnClickedSkipButton");
-
-            // 여기서 일러스트, TextUIUX도 비활성화 해야 됨.   
-            StartCoroutine(this.DialogueFlowEndOperation());
-
-            this.DialogueMainFlow = null;
-            this.sequenceCoroutine = null;
-            this.currentSequenceStep = null;
-            
-            // 다른 시스템으로 넘어가도록 명시.
-        }
-
-        private IEnumerator OperateDialogueAutoDisplay()
-        {
-            float waitedTime = 0;
-
-            while (true)
-            {
-                // 충분히 기다렸으면, 다음 문자열 출력 코루틴 실행 요청.
-                if (waitedTime >= this.AutoDuration)
-                {
-                    // 다음 문자열이 없으면, break
-                    if (this.SequenceSteps.Count <= 0) break;
-
-                    this.DialogueSequenceSetpOperation();
-                }
-
-                // 현재 재생 중인 글자 출력 코루틴이 없으면, 대기시간 증가.
-                if (this.sequenceCoroutine == null)
-                {
-                    waitedTime += Time.deltaTime;
-                }
-
-                yield return Time.deltaTime;
-            }
-
-            this.autoCoroutine = null;
-        }
-
-        private IEnumerator OperateDialogueTextUIUXAction()
-        {
-            switch (this.currentSequenceStep.ActionType)
-            {
-                case ActionType.TextUIUX_FadeIn:
-                    yield return StartCoroutine(this.DialogueTextMediatorView.TextUIUX_FadeIn(1f));
-                    break;
-                case ActionType.TextUIUX_FadeOut:
-                    yield return StartCoroutine(this.DialogueTextMediatorView.TextUIUX_FadeOut(1f));
-                    break;
-                case ActionType.TextUIUX_DirectShow:
-                    this.DialogueTextMediatorView.Show();
-                    break;
-                case ActionType.TextUIUX_DirectHide:
-                    this.DialogueTextMediatorView.Hide();
-                    break;
-                default:
-                    break;
-            }
-
-            this.sequenceCoroutine = null;
-
-            this.DialogueSequenceSetpOperation();
-        }
-        private IEnumerator OperateDialogueTextDisplay(string content)
-        {
-            // 출력 기능을 담당하는 View 참조가 없으면 return.
-            if (this.DialogueTextMediatorView == null) yield break;
-
-            // View한테 Text 초기화 수행 요청.
-            this.DialogueTextMediatorView.ClearText();
-
-            // 안전장치: cps가 0 이하이면 즉시 출력
-            if (charsPerSecond <= 0f)
-            {
-                this.DialogueTextMediatorView.UpdateContentText(content);
-                yield break;
-            }
-
-            float delay = 1f / charsPerSecond;
-            WaitForSeconds wait = new WaitForSeconds(delay);
-
-            // 가장 단순한 방식: 글자 하나씩 붙이기
-            for (int i = 0; i < content.Length; i++)
-            {
-                this.DialogueTextMediatorView.AddText(content[i]);
-                yield return wait;
-            }
-
-            this.sequenceCoroutine = null;
-        }
-        private IEnumerator OperateDialogueIllustAction()
-        {
-            yield return StartCoroutine(this.DialogueIllustMediatorView.IllustAction(this.currentSequenceStep.TargetName, this.currentSequenceStep.ActionType, 1f));
-
-            this.sequenceCoroutine = null;
-
-            this.DialogueSequenceSetpOperation();
-        }
-    }*/
 }
