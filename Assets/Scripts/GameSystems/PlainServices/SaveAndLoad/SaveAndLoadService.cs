@@ -13,34 +13,34 @@ namespace GameSystems.PlainServices
 
     public class SaveAndLoadService : IPlainService, ISaveAndLoadService
     {
+        private IResourcesPathResolver ResourcesPathResolver;
         private IJsonReadAndWriteService JsonReadAndWriteService;
-
-        private string savePath;
 
         public SaveAndLoadService()
         {
-            this.savePath = System.IO.Path.Combine(Application.persistentDataPath, "SaveData", "Continue.json");
-
             var GlobalRepository = Repository.GlobalSceneRepository.Instance;
+            this.ResourcesPathResolver = GlobalRepository.PlainServices_LazyReferenceRepository.GetOrCreate<ResourcesPathResolver>();
             this.JsonReadAndWriteService = GlobalRepository.PlainServices_LazyReferenceRepository.GetOrCreate<JsonReadAndWriteService>();
         }
 
         public void Save(RuntimeUserDataModel RuntimeUserDataModel)
         {
+            string savePath = this.ResourcesPathResolver.GetSaveAndLoadCombinePath();
+
             SaveAndLoadData saveAndLoadData = new SaveAndLoadData();
 
             saveAndLoadData.GamePlayData = new GamePlayData(RuntimeUserDataModel.CurrentGamePlayModel);
             saveAndLoadData.CookingStoryScenarioData = new DTOs.CookingStoryScenarioData(RuntimeUserDataModel.CurrentCookingStoryScenarioDataModel);
             saveAndLoadData.CharacterStoryScenarioData = new CharacterStoryScenarioData(RuntimeUserDataModel.CurrentCharacterStoryScenarioDataModel);
 
-            Debug.Log($"Saved Path : {this.savePath}");
-
-            this.JsonReadAndWriteService.Wirte<SaveAndLoadData>(saveAndLoadData, this.savePath);
+            this.JsonReadAndWriteService.Wirte<SaveAndLoadData>(saveAndLoadData, savePath);
         }
 
         public bool TryLoad(out SaveAndLoadData saveAndLoadData)
         {
-            saveAndLoadData = this.JsonReadAndWriteService.Read<SaveAndLoadData>(this.savePath);
+            string savePath = this.ResourcesPathResolver.GetSaveAndLoadCombinePath();
+
+            saveAndLoadData = this.JsonReadAndWriteService.Read<SaveAndLoadData>(savePath);
 
             if (saveAndLoadData == null)
             {

@@ -32,8 +32,8 @@ namespace GameSystems.GameFlows.MainStageScene
         {
             // 다음 Story를 구분하기 위한 데이터 갱신 작업은, 결과창에서 수행할 것입니다.
 
-            EmptyScenePayload emptyScenePayload = new(EmptyScenePayloadState.ToMainStageScene);
-            ScenePayloadService.SetPayload<EmptyScenePayload>(emptyScenePayload);
+            LoadingScenePayload emptyScenePayload = new(LoadingScenePayloadState.ToMainStageScene);
+            ScenePayloadService.SetPayload<LoadingScenePayload>(emptyScenePayload);
 
             this.SceneService.ChangeScene("LoadingScene");
         }

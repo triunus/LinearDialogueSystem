@@ -37,13 +37,13 @@ namespace GameSystems.Models
     {
         public int DayNumber;
         public int RelationshipPoint;
-        public StoryScenarioType StoryScenarioType;
+        public DialogueStoryType StoryScenarioType;
 
         public GamePlayModel()
         {
             this.DayNumber = 0;
             this.RelationshipPoint = 0;
-            this.StoryScenarioType = StoryScenarioType.CookingStoryType;
+            this.StoryScenarioType = DialogueStoryType.CookingStoryType;
         }
 
         public void SetGamePlayModel(GamePlayData gamePlayData)

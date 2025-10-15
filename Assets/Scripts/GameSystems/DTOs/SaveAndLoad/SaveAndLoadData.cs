@@ -15,7 +15,7 @@ namespace GameSystems.DTOs
     {
         public int DayNumber;
         public int RelationshipPoint;
-        public StoryScenarioType StoryScenarioType;
+        public DialogueStoryType StoryScenarioType;
 
         public GamePlayData(Models.GamePlayModel gamePlayModel)
         {
@@ -26,10 +26,18 @@ namespace GameSystems.DTOs
     }
 
     [Serializable]
-    public enum StoryScenarioType
+    public enum DialogueStoryType
     {
         CookingStoryType = 0,
         CharacterStoryType = 1
+    }
+
+    [Serializable]
+    public enum DialoguePhaseType
+    {
+        Intro,
+        Pre_Outtro,
+        Post_Outtro
     }
 
     [Serializable]

@@ -5,7 +5,7 @@ using GameSystems.Models;
 using GameSystems.UnityServices;
 using GameSystems.PlainServices;
 
-namespace GameSystems.GameFlows.EmptyScene
+namespace GameSystems.GameFlows.LoadingScene
 {
     public interface IResourcePreloadGameFlow
     {
@@ -44,7 +44,7 @@ namespace GameSystems.GameFlows.EmptyScene
         public void PreloadResources()
         {
             // Payload Get & Clear
-            if (!this.ScenePayloadService.TryGetPayload<EmptyScenePayload>(out var payloadData))
+            if (!this.ScenePayloadService.TryGetPayload<LoadingScenePayload>(out var payloadData))
             {
                 Debug.Log($"Payload 데이터가 없음.");
                 return;
@@ -56,7 +56,7 @@ namespace GameSystems.GameFlows.EmptyScene
             switch (payloadData.EmptyScenePayloadState)
             {
                 // MainStgaeScene에서 LobbyScene으로 가는 부분.
-                case EmptyScenePayloadState.ToLobbyScene:
+                case LoadingScenePayloadState.ToLobbyScene:
 
                     Debug.Log($"EmptyScenePayloadState.ToLobby");
 
@@ -68,7 +68,7 @@ namespace GameSystems.GameFlows.EmptyScene
                 // LobbyScene에서 MainStgaeScene으로 가는 부분.
                 // 새로운 게임, 게임 이어하기, 게임 다시시작, 다음 애피소드?으로 넘어가기. 기능입니다.
                 // 리소스를 가져오는 필요한 값들은, LoadingScene으로 넘어오기 전에, 전역 Model 값에 등록됩니다.
-                case EmptyScenePayloadState.ToMainStageScene:
+                case LoadingScenePayloadState.ToMainStageScene:
                     Debug.Log($"EmptyScenePayloadState.ToMainStageScene");
 
                     // 필요한 데이터 Read.
@@ -83,7 +83,7 @@ namespace GameSystems.GameFlows.EmptyScene
                     break;
 
                 // 아무런 일 발생 안함. 오류.
-                case EmptyScenePayloadState.None:
+                case LoadingScenePayloadState.None:
                 default:
                     break;
             }

@@ -5,20 +5,30 @@
         // ?? 뭐 필요함?
     }
 
-    public class EmptyScenePayload : PlainServices.IPayload
+    public class LoadingScenePayload : PlainServices.IPayload
     {
-        public EmptyScenePayloadState EmptyScenePayloadState;
+        public LoadingScenePayloadState EmptyScenePayloadState;
 
-        public EmptyScenePayload(EmptyScenePayloadState emptyScenePayloadState)
+        public LoadingScenePayload(LoadingScenePayloadState emptyScenePayloadState)
         {
             EmptyScenePayloadState = emptyScenePayloadState;
         }
     }
 
-    public enum EmptyScenePayloadState
+    public enum LoadingScenePayloadState
     {
 
-        None, ToLobbyScene, ToMainStageScene
+        None, ToLobbyScene, ToMainStageScene, ToCookingScene, ToCharacterScene
+    }
+
+    public class CookingScenePayload : PlainServices.IPayload
+    {
+
+    }
+
+    public class CharacterScenePayload : PlainServices.IPayload
+    {
+
     }
 
     public class MainStageScenePayload : PlainServices.IPayload

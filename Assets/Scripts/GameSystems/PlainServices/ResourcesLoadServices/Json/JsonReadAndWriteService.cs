@@ -1,4 +1,7 @@
-﻿using System.IO;
+﻿using System;
+using System.Threading.Tasks;
+using System.IO;
+
 using UnityEngine;
 
 namespace GameSystems.PlainServices
@@ -7,6 +10,7 @@ namespace GameSystems.PlainServices
     {
         public void Wirte<T>(T targetData, string filePath) where T : class;
         public T Read<T>(string filePath) where T : class;
+        public Task<T> ReadAsync<T>(string filePath) where T : class;
     }
 
     public class JsonReadAndWriteService : IPlainService, IJsonReadAndWriteService
@@ -17,6 +21,7 @@ namespace GameSystems.PlainServices
             string directoryPath = Path.GetDirectoryName(filePath);
             if (!Directory.Exists(directoryPath))
             {
+                Debug.Log($"경로에 필요한 폴더 생성함.");
                 Directory.CreateDirectory(directoryPath);
             }
 
@@ -31,6 +36,28 @@ namespace GameSystems.PlainServices
 
             string json = File.ReadAllText(filePath);
             return JsonUtility.FromJson<T>(json);
+        }
+
+        public async Task<T> ReadAsync<T>(string filePath) where T : class
+        {
+            if (filePath.Equals(string.Empty)) return null;
+
+            try
+            {
+                if (!File.Exists(filePath))
+                {
+                    Debug.LogError($"[StreamingAssetsLoader] File not found: {filePath}");
+                    return null;
+                }
+
+                string jsonText = await File.ReadAllTextAsync(filePath);
+                return JsonUtility.FromJson<T>(jsonText);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[StreamingAssetsLoader] Load failed: {ex.GetType().Name} - {ex.Message}");
+                return null;
+            }
         }
     }
 }

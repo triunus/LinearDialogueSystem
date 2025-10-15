@@ -44,8 +44,8 @@ namespace GameSystems.GameFlows.LobbyScene
             // 새로운 게임을 수행할 시, 런타임 내 게임 데이터를 초기값으로 할당.
             this.RuntimeUserDataModel.SetNewGame();
 
-            EmptyScenePayload emptyScenePayload = new(EmptyScenePayloadState.ToMainStageScene);
-            ScenePayloadService.SetPayload<EmptyScenePayload>(emptyScenePayload);
+            LoadingScenePayload emptyScenePayload = new(LoadingScenePayloadState.ToMainStageScene);
+            ScenePayloadService.SetPayload<LoadingScenePayload>(emptyScenePayload);
 
             this.SceneService.ChangeScene("LoadingScene");
         }
@@ -62,8 +62,8 @@ namespace GameSystems.GameFlows.LobbyScene
             this.RuntimeUserDataModel.SetLoadGame(saveAndLoadData);
             saveAndLoadData = null;
 
-            EmptyScenePayload emptyScenePayload = new(EmptyScenePayloadState.ToMainStageScene);
-            ScenePayloadService.SetPayload<EmptyScenePayload>(emptyScenePayload);
+            LoadingScenePayload emptyScenePayload = new(LoadingScenePayloadState.ToMainStageScene);
+            ScenePayloadService.SetPayload<LoadingScenePayload>(emptyScenePayload);
 
             // 씬 전환.
             this.SceneService.ChangeScene("LoadingScene");

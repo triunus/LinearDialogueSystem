@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Threading.Tasks;
 using System.IO;
 
@@ -7,33 +6,24 @@ using UnityEngine;
 
 namespace GameSystems.PlainServices
 {
-    public interface IIllustDataLoadService
+    public interface ITextrue2DLoadService
     {
         public Task<Texture2D> LoadIllustTexture2D(string detailPath);
     }
 
-    public class DialogueActorLoadService : IPlainService, IIllustDataLoadService
+    public class Textrue2DLoadService : IPlainService, ITextrue2DLoadService
     {
-        private string illustDirectoryPath;
-
-        public DialogueActorLoadService()
-        {
-            this.illustDirectoryPath = Path.Combine(Application.streamingAssetsPath, "DialogueActors");
-        }
-
         public async Task<Texture2D> LoadIllustTexture2D(string detailPath)
         {
-            string path = Path.Combine(this.illustDirectoryPath, detailPath + ".png");
-
             try
             {
-                if (!File.Exists(path))
+                if (!File.Exists(detailPath))
                 {
-                    Debug.LogError($"[StreamingAssetsLoader] File not found: {path}");
+                    Debug.LogError($"[StreamingAssetsLoader] File not found: {detailPath}");
                     return null;
                 }
 
-                byte[] fileData = await File.ReadAllBytesAsync(path);
+                byte[] fileData = await File.ReadAllBytesAsync(detailPath);
                 // 2x2 크기의 빈 텍스처 객체를 생성
                 Texture2D returnTexture2D = new Texture2D(2, 2);
                 returnTexture2D.name = detailPath;

@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-using GameSystems.GameFlows.EmptyScene;
+using GameSystems.GameFlows.LoadingScene;
 
 namespace GameSystems.Boots
 {

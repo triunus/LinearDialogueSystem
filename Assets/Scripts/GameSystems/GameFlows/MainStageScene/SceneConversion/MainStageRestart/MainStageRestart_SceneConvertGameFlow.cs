@@ -32,8 +32,8 @@ namespace GameSystems.GameFlows.MainStageScene
 
         public void RestartMainStageScene()
         {
-            EmptyScenePayload emptyScenePayload = new(EmptyScenePayloadState.ToMainStageScene);
-            ScenePayloadService.SetPayload<EmptyScenePayload>(emptyScenePayload);
+            LoadingScenePayload emptyScenePayload = new(LoadingScenePayloadState.ToMainStageScene);
+            ScenePayloadService.SetPayload<LoadingScenePayload>(emptyScenePayload);
 
             this.SceneService.ChangeScene("LoadingScene");
         }

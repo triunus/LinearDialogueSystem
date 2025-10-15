@@ -45,8 +45,8 @@ namespace GameSystems.GameFlows.MainStageScene
             // 현재 게임 저장.
             this.SaveAndLoadService.Save(this.RuntimeUserDataModel);
 
-            EmptyScenePayload emptyScenePayload = new(EmptyScenePayloadState.ToLobbyScene);
-            ScenePayloadService.SetPayload<EmptyScenePayload>(emptyScenePayload);
+            LoadingScenePayload emptyScenePayload = new(LoadingScenePayloadState.ToLobbyScene);
+            ScenePayloadService.SetPayload<LoadingScenePayload>(emptyScenePayload);
 
             // 씬 전환.
             this.SceneService.ChangeScene("LoadingScene");
