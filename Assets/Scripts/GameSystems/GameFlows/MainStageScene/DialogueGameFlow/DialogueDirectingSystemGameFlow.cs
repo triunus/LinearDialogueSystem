@@ -1,6 +1,6 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
+
 using UnityEngine;
 
 using GameSystems.DTOs;
@@ -10,31 +10,31 @@ namespace GameSystems.GameFlows.MainStageScene
 {
     public class DialogueDirectingSystemGameFlow : MonoBehaviour, IGameFlow
     {
-        // CanvasUIUX 기능 퍼사드.
-        private DialogueCanvasUIUXVisualHub DialogueCanvasUIUXVisualHub;
-        // BackGround 기능 퍼사드.
-        private DialogueBackGroundVisualHub DialogueBackGroundVisualHub;
-        // Actor 기능 퍼사드.
-        private DialogueActorVisualHub DialogueActorVisualHub;
-
         // Text 출력 View
-        private DialogueTextDisplayView DialogueTextDisplayView;
+        private IDialogueTextDirectingView DialogueTextDirectingView;
+        // 선택지 출력 View
+        private IDialogueChoiceDirectingViewMediator DialogueChoiceDirectingViewMediator;
+        // Cutscene 출력 View
+        private IDialogueCutsceneDirectingView DialogueCutsceneDirectingView;
+        // Image 연출 Hub 퍼사드
+        private IDialogueImageDirectingFacade DialogueImageDirectingFacade;
 
-        // CanvasUIUX, BackGround, Actor의 Action 코루틴.
-        private Coroutine ActionCoroutine;
         // Text 출력 코루틴.
         private Coroutine TextDisplayCoroutine;
+        // CanvasUIUX, BackGround, Actor의 Action 코루틴.
+        private Dictionary<int, Coroutine> ActionCoroutines = new();
 
         // 자동 재생 기능 코루틴.
         private Coroutine AutoCoroutine;
         private float AutoDuration = 3f;
 
-        // 연출할 목록
-        private List<SequenceStepData> SequenceStepDatas;
-        // 연출을 스킵할 수 있는지 여부.
-        private bool IsDialogueSkipable;
-        // 현재 진행 중인 연출 Row.
-        private SequenceStepData currentSequenceStepData;
+        private List<DialogueDirectingData> TotalDialogueDirectingDatas;
+
+        private bool currentIsSkipable = false;
+        private bool currentIsAutoable = false;
+        private string NextDirectiveCommand = default;
+
+        private int currentDirectingIndex = 0;
 
         private void Awake()
         {
@@ -42,167 +42,153 @@ namespace GameSystems.GameFlows.MainStageScene
 
             LocalRepository.GameFlow_LazyReferenceRepository.RegisterReference<DialogueDirectingSystemGameFlow>(this);
 
-            this.DialogueCanvasUIUXVisualHub = LocalRepository.Entity_LazyReferenceRepository.
-                GetOrWaitReference<DialogueCanvasUIUXVisualHub>(x => this.DialogueCanvasUIUXVisualHub = x);
-            this.DialogueBackGroundVisualHub = LocalRepository.Entity_LazyReferenceRepository.
-                GetOrWaitReference<DialogueBackGroundVisualHub>(x => this.DialogueBackGroundVisualHub = x);
-            this.DialogueActorVisualHub = LocalRepository.Entity_LazyReferenceRepository.
-                GetOrWaitReference<DialogueActorVisualHub>(x => this.DialogueActorVisualHub = x);
+            var entityReferenceRepository = LocalRepository.Entity_LazyReferenceRepository;
 
-            this.DialogueTextDisplayView = LocalRepository.Entity_LazyReferenceRepository.
-                GetOrWaitReference<DialogueTextDisplayView>(x => this.DialogueTextDisplayView = x);
+            this.DialogueTextDirectingView =
+                entityReferenceRepository.GetOrWaitReference<DialogueTextDirectingView>(x => this.DialogueTextDirectingView = x);
+            this.DialogueChoiceDirectingViewMediator =
+                entityReferenceRepository.GetOrWaitReference<DialogueChoiceDirectingViewMediator>(x => this.DialogueChoiceDirectingViewMediator = x);
+            this.DialogueCutsceneDirectingView =
+                entityReferenceRepository.GetOrWaitReference<DialogueCutsceneDirectingView>(x => this.DialogueCutsceneDirectingView = x);
+            this.DialogueImageDirectingFacade =
+                entityReferenceRepository.GetOrWaitReference<DialogueImageDirectingFacade>(x => this.DialogueImageDirectingFacade = x);
 
             this.InitialSetting();
+//            this.InitialSetting_Parsing();
         }
+
         private void InitialSetting()
         {
-            this.SetSequenceStepDatas
-                (
-                    new SequenceStepData[]
-                    {
-                        new SequenceStepData(0, SequenceDataType.CanvasUIUXActionType, false, true,
-                            new ActionDirectionData("DefaultCutscene", ActionType.FadeIn, string.Empty, "1")),
-                        new SequenceStepData(0, SequenceDataType.CanvasUIUXActionType, false, true,
-                            new ActionDirectionData("DefaultTitle", ActionType.FadeIn, string.Empty, "1")),
-                        new SequenceStepData(0, SequenceDataType.CanvasUIUXActionType, false, true,
-                            new ActionDirectionData("DefaultTitle", ActionType.FadeOut, string.Empty, "1")),
-                        new SequenceStepData(0, SequenceDataType.CanvasUIUXActionType, false, true,
-                            new ActionDirectionData("DefaultCutscene", ActionType.FadeOut, string.Empty, "1")),
-
-                        new SequenceStepData(0, SequenceDataType.BackGroundActionType, false, true,
-                            new ActionDirectionData("DefaultBackGround", ActionType.FadeIn, string.Empty, "0.5")),
-                        new SequenceStepData(0, SequenceDataType.CanvasUIUXActionType, false, true,
-                            new ActionDirectionData("DefaultDialogueUIUX", ActionType.FadeIn, string.Empty, "0.5")),
-
-                        new SequenceStepData(0, SequenceDataType.ActorActionType, false, true,
-                            new FaceDirectionData("DefaultCharacter01", FaceType.Default),  new ActionDirectionData("DefaultCharacter01", ActionType.FadeIn, "8", "1")),
-                        new SequenceStepData(0, SequenceDataType.ActorActionType, false, true,
-                            new FaceDirectionData("DefaultCharacter02", FaceType.Default),  new ActionDirectionData("DefaultCharacter02", ActionType.Move, "0_2", "1")),
-
-                        new SequenceStepData(0, SequenceDataType.CanvasUIUXActionType, false, true,
-                            new ActionDirectionData("DefaultTextPanel", ActionType.FadeIn, string.Empty, "1")),
-
-                        new SequenceStepData(0, SequenceDataType.SayAndActorActionType, true, false,
-                            new SayDirectionTextData("Charactor01", "안녕 Character01 이야."),
-                            new FaceDirectionData("DefaultCharacter01", FaceType.Default),  new ActionDirectionData("DefaultCharacter01", ActionType.None, "0", "0")),
-                        new SequenceStepData(0, SequenceDataType.SayAndActorActionType, true, false,
-                            new SayDirectionTextData("Charactor02", "Hi Character02 이야."),
-                            new FaceDirectionData("DefaultCharacter02", FaceType.Default),  new ActionDirectionData("DefaultCharacter02", ActionType.None, "0", "0")),
-                        new SequenceStepData(0, SequenceDataType.SayAndActorActionType, false, true,
-                            new SayDirectionTextData("Charactor02", "난 먼저 갈겡."),
-                            new FaceDirectionData("DefaultCharacter02", FaceType.Default),  new ActionDirectionData("DefaultCharacter02", ActionType.Move, "2_0", "1")),
-                        new SequenceStepData(0, SequenceDataType.ActorActionType, false, true,
-                            new FaceDirectionData("DefaultCharacter02", FaceType.Default),  new ActionDirectionData("DefaultCharacter02", ActionType.FadeOut, "0", "1")),
-
-                        new SequenceStepData(0, SequenceDataType.SayAndActorActionType, false, true,
-                            new SayDirectionTextData("Charactor01", "같이가 ㅠㅠ"),
-                            new FaceDirectionData("DefaultCharacter01", FaceType.Default),  new ActionDirectionData("DefaultCharacter01", ActionType.Move, "8_0", "1")),
-                        new SequenceStepData(0, SequenceDataType.ActorActionType, false, true,
-                            new FaceDirectionData("DefaultCharacter01", FaceType.Default),  new ActionDirectionData("DefaultCharacter01", ActionType.FadeOut, "0", "1")),
-
-
-                        new SequenceStepData(0, SequenceDataType.CanvasUIUXActionType, false, true,
-                            new ActionDirectionData("DefaultTextPanel", ActionType.FadeOut, string.Empty, "0.5")),
-                        new SequenceStepData(0, SequenceDataType.CanvasUIUXActionType, false, true,
-                            new ActionDirectionData("DefaultDialogueUIUX", ActionType.FadeOut, string.Empty, "0.5")),
-                        new SequenceStepData(0, SequenceDataType.BackGroundActionType, false, true,
-                            new ActionDirectionData("DefaultBackGround", ActionType.FadeOut, string.Empty, "1")),
-                    },
-                    false
-                );
+            this.TotalDialogueDirectingDatas = new()
+            {
+                new DialogueDirectingData(0, "DialogueCutsceneDirectingType", "FadeInOut_Title01_Chapter01_1_1_1", false, false, true, "Next"),
+                new DialogueDirectingData(1, "DialogueImageDirectingType", "FadeIn_DefaultBackGround_1", true, false, true, "Next"),
+                new DialogueDirectingData(2, "DialogueImageDirectingType", "FadeIn_DefaultDialogueUIUX_1", false, false, true, "End")
+            };
         }
 
-        public void SetSequenceStepDatas(SequenceStepData[] sequenceStepDatas, bool isDialogueSkipable)
+/*        private async void InitialSetting_Parsing()
         {
-            this.SequenceStepDatas = new(sequenceStepDatas);
-            this.IsDialogueSkipable = isDialogueSkipable;
+            var GlobalRepository = Repository.GlobalSceneRepository.Instance;
+
+            PlainServices.IResourcesPathResolver resourcesPathResolver =
+                GlobalRepository.PlainServices_LazyReferenceRepository.GetOrCreate<PlainServices.ResourcesPathResolver>();
+            PlainServices.IJsonReadAndWriteService jsonReadAndWriteService =
+                GlobalRepository.PlainServices_LazyReferenceRepository.GetOrCreate<PlainServices.JsonReadAndWriteService>();
+
+            string filePath = resourcesPathResolver.GetDialogueStoryPath(DialogueStoryType.CookingStoryType, 0, DialoguePhaseType.Intro);
+
+            this.DialogueSequenceStepDataList_Temp = await jsonReadAndWriteService.ReadAsync<DialogueSequenceStepDataList_ForJson>(filePath);
+
+            this.SequenceStepDatas = new();
+            foreach (var data in DialogueSequenceStepDataList_Temp.DialogueSequenceStepDatas)
+            {
+                this.SequenceStepDatas.Add(new(data));
+            }
+        }*/
+
+        public void SetSequenceStepDatas(DialogueDirectingData[] dialogueDirectingDatas)
+        {
+            this.TotalDialogueDirectingDatas = new List<DialogueDirectingData>(dialogueDirectingDatas);
         }
         public bool IsDialogueSystemVaild()
         {
-            if (this.SequenceStepDatas == null || this.SequenceStepDatas.Count <= 0) return false;
+            if (this.TotalDialogueDirectingDatas == null || this.TotalDialogueDirectingDatas.Count <= 0) return false;
             else return true;
         }
 
         public void TestButtonOperation()
         {
-            this.StartDialogueDirectingSystem();
+            this.OperateDialogueDirecting(this.currentDirectingIndex);
         }
 
-        public void StartDialogueDirectingSystem()
+        public void OperateDialogueDirecting(int currentDirectingIndex)
         {
-
-            if (!(this.TextDisplayCoroutine == null && this.ActionCoroutine == null)) return;
-
-            if (this.SequenceStepDatas.Count <= 0)
-                this.EndDialogueDirectingSystem();
-
-            // 현재 멤버로 등록.
-            this.currentSequenceStepData = this.SequenceStepDatas[0];
-            // 수행 목록에서 삭제.
-            this.SequenceStepDatas.RemoveAt(0);
-
-            switch (this.currentSequenceStepData.SequenceDataType)
+            // 수행하고자 하는 연출 번호가 잘못된 경우, return.
+            if (this.TotalDialogueDirectingDatas.Count <= currentDirectingIndex || this.TotalDialogueDirectingDatas[currentDirectingIndex] == null)
             {
-                case SequenceDataType.BackGroundActionType:
-                    if (this.DialogueBackGroundVisualHub.TryGetAction(this.currentSequenceStepData.ActionDirectionData, out var backGroundCo) &&
-                        backGroundCo != null) this.ActionCoroutine = StartCoroutine(this.OperateActionCoroutine(backGroundCo));
-                    break;
-                case SequenceDataType.CanvasUIUXActionType:
-                    if (this.DialogueCanvasUIUXVisualHub.TryGetAction(this.currentSequenceStepData.ActionDirectionData, out var canvasUIUXCo) &&
-                        canvasUIUXCo != null) this.ActionCoroutine = StartCoroutine(this.OperateActionCoroutine(canvasUIUXCo));
-                    break;
-                case SequenceDataType.ActorActionType:
-                    if(this.DialogueActorVisualHub.TrySetFace(this.currentSequenceStepData.FaceDirectionData) &&
-                        this.DialogueActorVisualHub.TryGetAction(this.currentSequenceStepData.ActionDirectionData, out var actorCo01) &&
-                        actorCo01 != null) this.ActionCoroutine = StartCoroutine(this.OperateActionCoroutine(actorCo01));
-                    break;
-                case SequenceDataType.SayAndActorActionType:
-                    if (this.DialogueActorVisualHub.TrySetFace(this.currentSequenceStepData.FaceDirectionData) &&
-                        this.DialogueActorVisualHub.TryGetAction(this.currentSequenceStepData.ActionDirectionData, out var actorCo02) &&
-                        this.DialogueTextDisplayView.TryGetTextDisplayOperation(this.currentSequenceStepData.SayDirectionTextData, out var textDisplayCo) &&
-                        textDisplayCo != null)
-                    {
-                        if(actorCo02 != null)
-                        {
-                            this.ActionCoroutine = StartCoroutine(this.OperateActionCoroutine(actorCo02));
-                        }
+                Debug.Log($"잘못된 연출 번호 : {currentDirectingIndex}");
+                return;
+            }
 
+            this.currentDirectingIndex = currentDirectingIndex;
+
+            Debug.Log($"호출됨 1");
+
+            // 이번에 수행할 연출 데이터 가져옴.
+            DialogueDirectingData currentDialogueDirectingData = this.TotalDialogueDirectingDatas[currentDirectingIndex];
+
+            DirectingType currentDirectingType = (DirectingType)System.Enum.Parse(typeof(DirectingType), currentDialogueDirectingData.DirectingType);
+
+            Debug.Log($"호출됨 2");
+
+            switch (currentDirectingType)
+            {
+                case DirectingType.DialogueTextDirectingType:
+                    Debug.Log($"호출됨 3");
+                    if (this.DialogueTextDirectingView.TryDirectTextDisplayOperation(currentDialogueDirectingData.DirectingContent, out var textDisplayCo) && textDisplayCo != null)
                         this.TextDisplayCoroutine = StartCoroutine(this.OperateTextDisplayCoroutine(textDisplayCo));
+                    break;
+                case DirectingType.DialogueChoiceDirectingType:
+                    Debug.Log($"호출됨 4");
+                    if (this.DialogueChoiceDirectingViewMediator.TryDirectChoiceViewOperation(currentDialogueDirectingData.DirectingContent, out var choiceDisplayCo) && choiceDisplayCo != null)
+                    {
+                        Coroutine tempCoroutine = StartCoroutine(this.OperateActionCoroutine(currentDialogueDirectingData.Index, choiceDisplayCo));
+
+                        this.ActionCoroutines.Add(currentDialogueDirectingData.Index, tempCoroutine);
+                    }
+                    break;
+                case DirectingType.DialogueCutsceneDirectingType:
+                    Debug.Log($"호출됨 5");
+                    if (this.DialogueCutsceneDirectingView.TryDirectCutsceneDisplayOperation(currentDialogueDirectingData.DirectingContent, out var cutsceneCo) && cutsceneCo != null)
+                    {
+                        Debug.Log($"호출됨 5-1");
+                        Coroutine tempCoroutine = StartCoroutine(this.OperateActionCoroutine(currentDialogueDirectingData.Index, cutsceneCo));
+
+                        this.ActionCoroutines.Add(currentDialogueDirectingData.Index, tempCoroutine);
+                    }
+                    break;
+                case DirectingType.DialogueImageDirectingType:
+                    Debug.Log($"호출됨 6");
+                    if (this.DialogueImageDirectingFacade.TryAction(currentDialogueDirectingData.DirectingContent, out var ImageDirecting) && ImageDirecting != null)
+                    {
+                        Coroutine tempCoroutine = StartCoroutine(this.OperateActionCoroutine(currentDialogueDirectingData.Index, ImageDirecting));
+
+                        this.ActionCoroutines.Add(currentDialogueDirectingData.Index, tempCoroutine);
                     }
                     break;
                 default:
-                    // 뭔가 오류가 들어온건데, 한번 더 반복. ( 언젠가 SequenceStepDatas <= 0이 되서 종료됨 )
-                    this.StartDialogueDirectingSystem();
                     break;
             }
+
+            Debug.Log($"호출됨 7");
+            if (currentDialogueDirectingData.IsChainWithNext)
+            {
+                Debug.Log($"호출됨 8");
+                if (this.TryGetNextDirectingIndex(currentDialogueDirectingData.NextDirectiveCommand, out var index))
+                {
+                    this.OperateDialogueDirecting(index);
+                    return;
+                }
+            }
+
+            Debug.Log($"호출됨 9");
+            this.currentIsSkipable = currentDialogueDirectingData.IsSkipable;
+            this.currentIsAutoable = currentDialogueDirectingData.IsAutoAble;
+            this.NextDirectiveCommand = currentDialogueDirectingData.NextDirectiveCommand;
         }
         public void StopDialogueDirection()
         {
-            if (this.currentSequenceStepData == null) return;
+            this.StopCoroutine(this.TextDisplayCoroutine);
+            this.TextDisplayCoroutine = null;
 
-            switch (this.currentSequenceStepData.SequenceDataType)
+            for(int i = 0; i < this.ActionCoroutines.Count; ++i)
             {
-                case SequenceDataType.BackGroundActionType:
-                    this.StopCoroutine(this.ActionCoroutine);
-                    this.ActionCoroutine = null;
-                    break;
-                case SequenceDataType.CanvasUIUXActionType:
-                    this.StopCoroutine(this.ActionCoroutine);
-                    this.ActionCoroutine = null;
-                    break;
-                case SequenceDataType.ActorActionType:
-                    this.StopCoroutine(this.ActionCoroutine);
-                    this.ActionCoroutine = null;
-                    break;
-                case SequenceDataType.SayAndActorActionType:
-                    this.StopCoroutine(this.ActionCoroutine);
-                    this.StopCoroutine(this.TextDisplayCoroutine);
-                    this.ActionCoroutine = null;
-                    this.TextDisplayCoroutine = null;
-                    break;
-                default:
-                    break;
+                this.StopCoroutine(this.ActionCoroutines[i]);
+                this.ActionCoroutines[i] = null;
             }
+
+            this.ActionCoroutines.Clear();
         }
         public void EndDialogueDirectingSystem()
         {
@@ -212,12 +198,15 @@ namespace GameSystems.GameFlows.MainStageScene
         public void OnClicked_Mouse()
         {
             // 해당 대화 연출 스킵 가능한지 확인.
-            if (this.currentSequenceStepData.IsSkipable)
+            if (this.currentIsSkipable)
             {
                 // Type 중이 아니라면, 다음 시퀀스 스탭 시작.
-                if (this.ActionCoroutine == null && this.TextDisplayCoroutine == null)
+                if (this.ActionCoroutines.Count == 0 && this.TextDisplayCoroutine == null)
                 {
-                    this.StartDialogueDirectingSystem();
+                    if (this.TryGetNextDirectingIndex(this.NextDirectiveCommand, out var index))
+                    {
+                        this.OperateDialogueDirecting(index);
+                    }
                 }
                 // Type 중이라면, 중지 및 전부 출력.
                 else
@@ -255,13 +244,16 @@ namespace GameSystems.GameFlows.MainStageScene
             while (true)
             {
                 //  현재 재생 중인 코루틴이 있으면 그냥 넘어감.
-                if(this.ActionCoroutine == null && this.TextDisplayCoroutine == null)
+                if(this.ActionCoroutines.Count == 0 && this.TextDisplayCoroutine == null)
                 {
                     // 충분히 기다렸으면, 다음 대화 연출 수행 요청.
                     if (waitedTime >= this.AutoDuration)
                     {
-                        this.StartDialogueDirectingSystem();
-                        waitedTime = 0;
+                        if (this.TryGetNextDirectingIndex(this.NextDirectiveCommand, out var index))
+                        {
+                            this.OperateDialogueDirecting(index);
+                            waitedTime = 0;
+                        }
                     }
                     // 현재 재생 중인 코루틴이 없으면 시간 증가.
                     else
@@ -275,22 +267,26 @@ namespace GameSystems.GameFlows.MainStageScene
         }
         public void OnClickedSkipButton()
         {
-            Debug.Log($"OnClickedSkipButton - IsDialogueSkipable : {this.IsDialogueSkipable}");
-
             // 스킵 허용 안할시 넘어감.
-            if (!this.IsDialogueSkipable) return;
+            if (!this.currentIsSkipable) return;
 
             this.StopDialogueDirection();
         }
 
-        public IEnumerator OperateActionCoroutine(IEnumerator actionOperation)
+        public IEnumerator OperateActionCoroutine(int directingIndex, IEnumerator actionOperation)
         {
             yield return StartCoroutine(actionOperation);
 
-            this.ActionCoroutine = null;
+            this.ActionCoroutines[directingIndex] = null;
+            this.ActionCoroutines.Remove(directingIndex);
 
-            if (this.currentSequenceStepData.IsAutoable && this.TextDisplayCoroutine == null)
-                this.StartDialogueDirectingSystem();
+            if (this.currentIsAutoable && this.ActionCoroutines.Count == 0 && this.TextDisplayCoroutine == null)
+            {
+                if (this.TryGetNextDirectingIndex(this.NextDirectiveCommand, out var index))
+                {
+                    this.OperateDialogueDirecting(index);
+                }
+            }
         }
         public IEnumerator OperateTextDisplayCoroutine(IEnumerator textDisplayOperation)
         {
@@ -298,8 +294,41 @@ namespace GameSystems.GameFlows.MainStageScene
 
             this.TextDisplayCoroutine = null;
 
-            if (this.currentSequenceStepData.IsAutoable && this.ActionCoroutine == null)
-                this.StartDialogueDirectingSystem();
+            if (this.currentIsAutoable && this.ActionCoroutines.Count == 0)
+            {
+                if(this.TryGetNextDirectingIndex(this.NextDirectiveCommand, out var index))
+                {
+                    this.OperateDialogueDirecting(index);
+                }
+            }
+        }
+        private bool TryGetNextDirectingIndex(string nextDirectiveCommand, out int nextDirectingIndex)
+        {
+            string[] parsedData = nextDirectiveCommand.Split('_');
+
+            NextDirectiveCommandType nextDirectiveCommandType = (NextDirectiveCommandType)System.Enum.Parse(typeof(NextDirectiveCommandType), parsedData[0]);
+
+            switch(nextDirectiveCommandType)
+            {
+                case NextDirectiveCommandType.Next:
+                    nextDirectingIndex = this.currentDirectingIndex + 1;
+                    return true;
+                case NextDirectiveCommandType.Jump:
+                    nextDirectingIndex = int.Parse(parsedData[1]);
+                    return true;
+                case NextDirectiveCommandType.End:
+                    nextDirectingIndex = default;
+                    Debug.Log($"끝남");
+                    return false;
+                case NextDirectiveCommandType.Stop:
+                    nextDirectingIndex = default;
+                    Debug.Log($"잠시 정지");
+                    return false;
+                default:
+                    Debug.Log($"NextDirectiveCommandType 변환이 잘못됨.");
+                    nextDirectingIndex = default;
+                    return false;
+            }
         }
     }
 }

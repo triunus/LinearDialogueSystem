@@ -33,7 +33,7 @@ namespace GameSystems.PlainServices
             saveAndLoadData.CookingStoryScenarioData = new DTOs.CookingStoryScenarioData(RuntimeUserDataModel.CurrentCookingStoryScenarioDataModel);
             saveAndLoadData.CharacterStoryScenarioData = new CharacterStoryScenarioData(RuntimeUserDataModel.CurrentCharacterStoryScenarioDataModel);
 
-            this.JsonReadAndWriteService.Wirte<SaveAndLoadData>(saveAndLoadData, savePath);
+            this.JsonReadAndWriteService.TryWrite<SaveAndLoadData>(saveAndLoadData, savePath);
         }
 
         public bool TryLoad(out SaveAndLoadData saveAndLoadData)

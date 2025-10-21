@@ -1,4 +1,4 @@
-﻿using System.Collections;
+﻿/*using System.Collections;
 using UnityEngine;
 
 using GameSystems.DTOs;
@@ -28,7 +28,7 @@ namespace GameSystems.Entities.MainStageScene
             this.faceSetterHub = LocalEntityRepository.GetOrCreate<DialogueActorFaceSetterPlugInHub>();
         }
 
-        public bool TryGetAction(ActionDirectionData actionDirectionData, out IEnumerator enumerator)
+        public bool TryGetAction(string directingContent, out IEnumerator enumerator)
         {
             enumerator = null;
 
@@ -63,4 +63,4 @@ namespace GameSystems.Entities.MainStageScene
         public bool TrySetFace(FaceDirectionData faceDirectionData)
             => this.faceSetterHub.TrySetFace(faceDirectionData.TargetName, faceDirectionData.FaceType);
     }
-}
+}*/

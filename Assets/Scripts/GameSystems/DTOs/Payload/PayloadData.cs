@@ -7,11 +7,11 @@
 
     public class LoadingScenePayload : PlainServices.IPayload
     {
-        public LoadingScenePayloadState EmptyScenePayloadState;
+        public LoadingScenePayloadState LoadingScenePayloadState;
 
         public LoadingScenePayload(LoadingScenePayloadState emptyScenePayloadState)
         {
-            EmptyScenePayloadState = emptyScenePayloadState;
+            LoadingScenePayloadState = emptyScenePayloadState;
         }
     }
 
@@ -33,11 +33,6 @@
 
     public class MainStageScenePayload : PlainServices.IPayload
     {
-        public DialogueTable DialogueDataTable;
 
-        public MainStageScenePayload(DialogueTable dialogueDataTable)
-        {
-            DialogueDataTable = dialogueDataTable;
-        }
     }
 }

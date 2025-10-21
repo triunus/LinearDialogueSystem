@@ -4,7 +4,7 @@ using GameSystems.DTOs;
 namespace GameSystems.Entities.MainStageScene
 {
     // Face Set
-    public class DialogueActorFaceSetterPlugInHub : PlugInHub<IFaceSetter>, IEntity
+    public class DialogueActorFaceSetterPlugInHub : PlugInHub<ISpriteSetter>, IEntity
     {
         public bool TrySetFace(string key, FaceType faceType)
         {

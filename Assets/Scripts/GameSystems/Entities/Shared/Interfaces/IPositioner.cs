@@ -7,6 +7,6 @@ namespace GameSystems.Entities
     public interface IPositioner
     {
         public void DirectPosition(Vector3 position);
-        public IEnumerator Move(Vector3[] positions, float[] durations);
+        public IEnumerator Move(Vector3[] positions, float durations);
     }
 }
