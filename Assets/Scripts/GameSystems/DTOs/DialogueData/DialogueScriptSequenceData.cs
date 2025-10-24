@@ -1,133 +1,76 @@
-﻿using System.Collections.Generic;
-
-namespace GameSystems.DTOs
+﻿namespace GameSystems.DTOs
 {
-    public class DialogueSequenceDataList
-    {
-        public List<SequenceStepData> SequenceStepDatas = new();
-
-        public bool IsSkipable;
-    }
-
-    public class SequenceStepData
+    public class DialogueDirectingData
     {
         public int Index;
-        public SequenceDataType SequenceDataType;
 
-        public SayDirectionTextData SayDirectionTextData;
-        public FaceDirectionData FaceDirectionData;
-        public ActionDirectionData ActionDirectionData;
-
+        public string DirectingType;
+        public string DirectingContent;
+        public bool IsChainWithNext;
         public bool IsSkipable;
-        public bool IsAutoable;
+        public bool IsAutoAble;
+        public string NextDirectiveCommand;
 
-        // 대화 + 표정 + Actor 행동
-        public SequenceStepData(int index, SequenceDataType sequenceDataType, bool isSkipable, bool isAutoable, SayDirectionTextData SayDirectionTextData, FaceDirectionData FaceDirectionData, ActionDirectionData ActionDirectionData)
+        public DialogueDirectingData(int index, string directingType, string directingContent, bool isChainWithNext, bool isSkipable, bool isAutoAble, string nextDirectiveCommand)
         {
             Index = index;
-            SequenceDataType = sequenceDataType;
-
+            DirectingType = directingType;
+            DirectingContent = directingContent;
+            IsChainWithNext = isChainWithNext;
             IsSkipable = isSkipable;
-            IsAutoable = isAutoable;
-
-            this.SayDirectionTextData = SayDirectionTextData;
-            this.FaceDirectionData = FaceDirectionData;
-            this.ActionDirectionData = ActionDirectionData;
+            IsAutoAble = isAutoAble;
+            NextDirectiveCommand = nextDirectiveCommand;
         }
-
-        // 대화 없이 표정과 액션만
-        public SequenceStepData(int index, SequenceDataType sequenceDataType, bool isSkipable, bool isAutoable, FaceDirectionData FaceDirectionData, ActionDirectionData ActionDirectionData)
-        {
-            Index = index;
-            SequenceDataType = sequenceDataType;
-
-            IsSkipable = isSkipable;
-            IsAutoable = isAutoable;
-
-            this.SayDirectionTextData = null;
-            this.FaceDirectionData = FaceDirectionData;
-            this.ActionDirectionData = ActionDirectionData;
-        }
-
-        // 액션만, CanvasUIUX or 일러스트
-        public SequenceStepData(int index, SequenceDataType sequenceDataType, bool isSkipable, bool isAutoable, ActionDirectionData ActionDirectionData)
-        {
-            Index = index;
-            SequenceDataType = sequenceDataType;
-
-            IsSkipable = isSkipable;
-            IsAutoable = isAutoable;
-
-            this.SayDirectionTextData = null;
-            this.FaceDirectionData = null;
-            this.ActionDirectionData = ActionDirectionData;
-        }
-
     }
 
-    public class SayDirectionTextData
+    [System.Serializable]
+    public enum DirectingType
     {
-        public string SpeakerName;
-        public string Content;
-
-        public SayDirectionTextData(string speakerName, string content)
-        {
-            SpeakerName = speakerName;
-            Content = content;
-        }
+        DialogueTextDirectingType,
+        DialogueChoiceDirectingType,
+        DialogueCutsceneDirectingType,
+        DialogueImageDirectingType
     }
-    public class FaceDirectionData
-    {
-        public string TargetName;
-        public FaceType FaceType;
-
-        public FaceDirectionData(string targetName, FaceType faceType)
-        {
-            TargetName = targetName;
-            FaceType = faceType;
-        }
-    }
-    public class ActionDirectionData
-    {
-        public string TargetName;
-
-        public ActionType ActionType;
-        public string ActionPosition;
-        public string ActionTime;
-
-        public ActionDirectionData(string targetName, ActionType actionType, string actionPosition, string actionTime)
-        {
-            TargetName = targetName;
-            ActionType = actionType;
-            ActionPosition = actionPosition;
-            ActionTime = actionTime;
-        }
-    }
-
-    public enum SequenceDataType
-    {
-        SayAndActorActionType,
-        ActorActionType,
-        CanvasUIUXActionType,
-        BackGroundActionType
-    }
-
-    public enum FaceType
-    {
-        Default = 0,
-    }
-
+    [System.Serializable]
     public enum ActionType
     {
+        None = 0,
+
+        FadeIn = 50,
+        FadeOut = 51,
+        DirectShow = 1,
+        DirectHide = 2,
+
+        SetPosition = 100,
+        Move = 110,
+
+        SetFaceSprite = 200,
+        SetAttitudeSprite = 210,
+    }
+    [System.Serializable]
+    public enum NextDirectiveCommandType
+    {
         None,
+        Stop,
+        Next,
+        Jump,
+        End
+    }
 
-        FadeIn,
-        FadeOut,
-        DirectShow,
-        DirectHide,
+    [System.Serializable]
+    public enum AttitudeType
+    {
+        None = 0,
+        Default = 1,
 
-        Move,
+        Test
+    }
+    [System.Serializable]
+    public enum FaceType
+    {
+        None = 0,
+        Default = 1,
 
-        Emotion_Embarrassed
+        Test
     }
 }

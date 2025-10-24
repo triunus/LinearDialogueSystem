@@ -35,7 +35,9 @@ namespace GameSystems.InputControllers.MainStageScene
             if (allow != null)
             {
                 if (DialogueDirectingSystemGameFlow != null)
-                    DialogueDirectingSystemGameFlow.OnClicked_Mouse();
+                {
+                    DialogueDirectingSystemGameFlow.OperateDialogueClickInteraction();
+                }
             }
         }
 

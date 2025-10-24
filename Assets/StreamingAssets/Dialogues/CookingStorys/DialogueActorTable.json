@@ -1,0 +1,25 @@
+{
+  "DialogueActorRows": [
+    {
+      "Index": 0,
+      "DialogueIndex": 0,
+      "DialoguePhaseType": 0,
+      "DialogueActorNames": "Illust0001, Illust0002",
+      "DialogueLogActorNames": null
+    },
+    {
+      "Index": 1,
+      "DialogueIndex": 0,
+      "DialoguePhaseType": 1,
+      "DialogueActorNames": "Illust0001, Illust0002, Illust0003",
+      "DialogueLogActorNames": null
+    },
+    {
+      "Index": 2,
+      "DialogueIndex": 0,
+      "DialoguePhaseType": 2,
+      "DialogueActorNames": "Illust0001, Illust0002, Illust0003, Illust0004",
+      "DialogueLogActorNames": null
+    }
+  ]
+}
