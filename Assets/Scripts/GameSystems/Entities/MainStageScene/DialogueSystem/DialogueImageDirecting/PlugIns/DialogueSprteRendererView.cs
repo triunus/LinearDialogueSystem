@@ -56,18 +56,18 @@ namespace GameSystems.Entities.MainStageScene
         }
 
 
-        public IEnumerator FadeIn(float duration)
+        public IEnumerator FadeIn(float duration, DTOs.BehaviourToken behaviourToken)
         {
             this.FadeInAndOutService.SetAlphaValue(this.SpriteRenderers, this.HidedAlpha);
             this.Show();
 
             yield return Time.deltaTime;
 
-            yield return this.FadeInAndOutService.FadeOperation(this.SpriteRenderers, this.HidedAlpha, this.ShowedAlpha, duration);
+            yield return this.FadeInAndOutService.FadeOperation(this.SpriteRenderers, this.HidedAlpha, this.ShowedAlpha, duration, behaviourToken);
         }
-        public IEnumerator FadeOut(float duration)
+        public IEnumerator FadeOut(float duration, DTOs.BehaviourToken behaviourToken)
         {
-            yield return this.FadeInAndOutService.FadeOperation(this.SpriteRenderers, this.ShowedAlpha, this.HidedAlpha, duration);
+            yield return this.FadeInAndOutService.FadeOperation(this.SpriteRenderers, this.ShowedAlpha, this.HidedAlpha, duration, behaviourToken);
 
             this.Hide();
         }

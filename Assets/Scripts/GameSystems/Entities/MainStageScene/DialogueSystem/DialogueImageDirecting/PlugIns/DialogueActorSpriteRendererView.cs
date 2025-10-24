@@ -28,6 +28,11 @@ namespace GameSystems.Entities.MainStageScene
         private Dictionary<AttitudeType, Texture2D> AttitudeTexture2DSet = new();
         private Dictionary<FaceType, Texture2D> FaceTexture2DSet = new();
 
+        [SerializeField] private Texture2D DefaultAttitude;
+        [SerializeField] private Texture2D TestAttitude;
+        [SerializeField] private Texture2D DefaultFace;
+        [SerializeField] private Texture2D TestFace;
+
         private void Awake()
         {
             var GlobalRepository = Repository.GlobalSceneRepository.Instance;
@@ -47,6 +52,10 @@ namespace GameSystems.Entities.MainStageScene
             DialoguePositionerPlugInHub.RegisterPlugIn(this.Key, this);
 
             this.Hide();
+            this.AttitudeTexture2DSet.Add(AttitudeType.Default, DefaultAttitude);
+            this.AttitudeTexture2DSet.Add(AttitudeType.Test, TestAttitude);
+            this.FaceTexture2DSet.Add(FaceType.Default, DefaultFace);
+            this.FaceTexture2DSet.Add(FaceType.Test, TestFace);
         }
         private void OnDestroy()
         {
@@ -87,20 +96,20 @@ namespace GameSystems.Entities.MainStageScene
             this.SpriteGameObject.SetActive(false);
         }
 
-        public IEnumerator FadeIn(float duration)
+        public IEnumerator FadeIn(float duration, DTOs.BehaviourToken behaviourToken)
         {
             // 일단 FadeOut 값으로 만들기.
-            this.FadeInAndOutService.SetAlphaValue(this.AttitudeSpriteRenderer, this.HidedAlpha);
+            this.FadeInAndOutService.SetAlphaValue( new SpriteRenderer[] { this.AttitudeSpriteRenderer, this.FaceSpriteRenderer }, this.HidedAlpha);
             // 활성화가 안되어 있으면 활성화.
             this.Show();
 
             yield return Time.deltaTime;
 
-            yield return this.FadeInAndOutService.FadeOperation(this.AttitudeSpriteRenderer, this.HidedAlpha, this.ShowedAlpha, duration);
+            yield return this.FadeInAndOutService.FadeOperation(new SpriteRenderer[] { this.AttitudeSpriteRenderer, this.FaceSpriteRenderer }, this.HidedAlpha, this.ShowedAlpha, duration, behaviourToken);
         }
-        public IEnumerator FadeOut(float duration)
+        public IEnumerator FadeOut(float duration, DTOs.BehaviourToken behaviourToken)
         {
-            yield return this.FadeInAndOutService.FadeOperation(this.AttitudeSpriteRenderer, this.ShowedAlpha, this.HidedAlpha, duration);
+            yield return this.FadeInAndOutService.FadeOperation(new SpriteRenderer[] { this.AttitudeSpriteRenderer, this.FaceSpriteRenderer }, this.ShowedAlpha, this.HidedAlpha, duration, behaviourToken);
 
             this.Hide();
         }
@@ -127,40 +136,49 @@ namespace GameSystems.Entities.MainStageScene
         public void DirectPosition(Vector3 position)
         {
             this.SpriteGameObject.transform.position = position;
-        }
-        public IEnumerator Move(Vector3[] positions, float duration)
-        {
-            if (positions.Length < 2)
-                yield break;
 
+            this.TempFlipX();
+        }
+        public IEnumerator Move(Vector3[] positions, float[] duration, DTOs.BehaviourToken behaviourToken)
+        {
             this.SpriteGameObject.transform.position = positions[0];
             this.Show();
 
             yield return Time.deltaTime;
 
-            // 초기값.
-            Vector3 start = positions[0];
-            Vector3 end = positions[1];
-            float elapsed = 0f;
-
-            // FilpX
-            float directionX = end.x - start.x;
-            this.AttitudeSpriteRenderer.flipX = directionX < 0f;
-
-            while (elapsed < duration)
+            for(int i = 0; i < duration.Length; ++i)
             {
-                float t = elapsed / duration;
-                this.SpriteGameObject.transform.position = Vector3.Lerp(start, end, t);
+                if (behaviourToken.IsRequestEnd) break;
+                // 초기값.
+                Vector3 start = positions[i];
+                Vector3 end = positions[i+1];
+                float elapsed = 0f;
 
-                elapsed += Time.deltaTime;
-                yield return Time.deltaTime;
+                // FilpX
+                float directionX = end.x - start.x;
+                this.AttitudeSpriteRenderer.flipX = directionX < 0f;
+
+                while (elapsed < duration[i])
+                {
+                    if (behaviourToken.IsRequestEnd) break;
+
+                    float t = elapsed / duration[i];
+                    this.SpriteGameObject.transform.position = Vector3.Lerp(start, end, t);
+
+                    elapsed += Time.deltaTime;
+                    yield return Time.deltaTime;
+                }
+
+                // 마지막 위치 지정
+                this.SpriteGameObject.transform.position = end;
             }
 
             // 마지막 위치 지정
-            this.SpriteGameObject.transform.position = end;
+            this.SpriteGameObject.transform.position = positions[positions.Length-1];
             // FilpX
             this.TempFlipX();
         }
+
 
         private void TempFlipX()
         {

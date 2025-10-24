@@ -61,10 +61,16 @@
     public enum AttitudeType
     {
         None = 0,
+        Default = 1,
+
+        Test
     }
     [System.Serializable]
     public enum FaceType
     {
         None = 0,
+        Default = 1,
+
+        Test
     }
 }

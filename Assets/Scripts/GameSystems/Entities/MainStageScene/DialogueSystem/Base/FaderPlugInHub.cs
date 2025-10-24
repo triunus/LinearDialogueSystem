@@ -7,32 +7,37 @@ namespace GameSystems.Entities.MainStageScene
 {
     public class FaderPlugInHub : PlugInHub<IFadeInAndOut>
     {
-        public bool TryFadeIn(string key, string faderContent, out IEnumerator enumerator)
+        public bool TryFadeIn(string key, string faderContent, out IEnumerator enumerator, out DTOs.BehaviourToken behaviourToken)
         {
             enumerator = null;
+            behaviourToken = null;
 
             if (this.PlugIns.ContainsKey(key))
             {
                 if (!this.TryParseDuration(faderContent, out var duration)) return false;
 
-                enumerator = this.PlugIns[key].FadeIn(duration);
+                behaviourToken = new DTOs.BehaviourToken(isRequestEnd: false);
+                enumerator = this.PlugIns[key].FadeIn(duration, behaviourToken);
                 return true;
             }
             else return false;
         }
-        public bool TryFadeOut(string key, string faderContent, out IEnumerator enumerator)
+        public bool TryFadeOut(string key, string faderContent, out IEnumerator enumerator, out DTOs.BehaviourToken behaviourToken)
         {
             enumerator = null;
+            behaviourToken = null;
 
             if (this.PlugIns.ContainsKey(key))
             {
                 if (!this.TryParseDuration(faderContent, out var duration)) return false;
 
-                enumerator = this.PlugIns[key].FadeOut(duration);
+                behaviourToken = new DTOs.BehaviourToken(isRequestEnd: false);
+                enumerator = this.PlugIns[key].FadeOut(duration, behaviourToken);
                 return true;
             }
             else return false;
         }
+
         private bool TryParseDuration(string faderContent, out float duration)
         {
             string[] parsedData = faderContent.Split('_');

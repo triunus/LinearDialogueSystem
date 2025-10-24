@@ -8,7 +8,7 @@ namespace GameSystems.Entities.MainStageScene
 {
     public interface IDialogueImageDirectingFacade
     {
-        public bool TryAction(string directingContent, out IEnumerator resultEnumerator);
+        public bool TryAction(string directingContent, out IEnumerator resultEnumerator, out DTOs.BehaviourToken behaviourToken);
     }
 
     public class DialogueImageDirectingFacade : MonoBehaviour, IEntity, IDialogueImageDirectingFacade
@@ -30,24 +30,24 @@ namespace GameSystems.Entities.MainStageScene
             this.PositionerPlugInHub = LocalEntityRepository.GetOrCreate<DialoguePositionerPlugInHub>();
         }
 
-        public bool TryAction(string directingContent, out IEnumerator resultEnumerator)
+        public bool TryAction(string directingContent, out IEnumerator resultEnumerator, out DTOs.BehaviourToken behaviourToken)
         {
             resultEnumerator = null;
+            behaviourToken = null;
 
             // parsedContent[0] : ActionType
             // parsedContent[1] : TargetName
             // parsedContent[2] : ActionType마다 다름.
             string[] parsedContent = directingContent.Split('_');
-
             ActionType result = (ActionType)System.Enum.Parse(typeof(ActionType), parsedContent[0]);
 
             switch (result)
             {
                 case ActionType.FadeIn:
-                    if (this.FaderPlugInHub.TryFadeIn(parsedContent[1], parsedContent[2], out resultEnumerator)) return true;
+                    if (this.FaderPlugInHub.TryFadeIn(parsedContent[1], parsedContent[2], out resultEnumerator, out behaviourToken)) return true;
                     else return false;
                 case ActionType.FadeOut:
-                    if (this.FaderPlugInHub.TryFadeOut(parsedContent[1], parsedContent[2], out resultEnumerator)) return true;
+                    if (this.FaderPlugInHub.TryFadeOut(parsedContent[1], parsedContent[2], out resultEnumerator, out behaviourToken)) return true;
                     else return false;
                 case ActionType.DirectShow:
                     if (this.ActivationPlugInHub.TryDirectShow(parsedContent[1])) return true;
@@ -65,7 +65,7 @@ namespace GameSystems.Entities.MainStageScene
                     if (this.PositionerPlugInHub.TryDirectPosition(parsedContent[1], parsedContent[2])) return true;
                     else return false;
                 case ActionType.Move:
-                    if (this.PositionerPlugInHub.TryMove(parsedContent[1], parsedContent[2], out resultEnumerator)) return true;
+                    if (this.PositionerPlugInHub.TryMove(parsedContent[1], parsedContent[2], out resultEnumerator, out behaviourToken)) return true;
                     else return false;
                 case ActionType.None:
                 default:

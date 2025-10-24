@@ -37,65 +37,77 @@ namespace GameSystems.Entities.MainStageScene
             return true;
         }
 
-        public bool TryMove(string key, string directingContent, out IEnumerator enumerator)
+        public bool TryMove(string key, string directingContent, out IEnumerator enumerator, out DTOs.BehaviourToken behaviourToken)
         {
             enumerator = null;
+            behaviourToken = null;
 
             if (!this.PlugIns.ContainsKey(key)) return false;
-            if (!this.TryParseMovePosition(directingContent, out var position)) return false;
-            if (!this.TryParseDuration(directingContent, out var duration)) return false;
+            if (!this.TryParseMoveValue(directingContent, out var parsedPositions, out var parsedDurations)) return false;
+ 
+            behaviourToken = new DTOs.BehaviourToken(false);
+            enumerator = this.PlugIns[key].Move(parsedPositions, parsedDurations, behaviourToken);
+            return true;
+        }
+        private bool TryParseMoveValue(string directingContent, out Vector3[] positions, out float[] durations)
+        {
+            positions = default;
+            durations = default;
 
-            enumerator = this.PlugIns[key].Move(position, duration);
+            // 문자열 나누기.
+            // 문자열에 필요 없는 값 삭제.
+            string onlyNumbers = new string(directingContent.Where(c => char.IsDigit(c) || c == '-' || c == '/' || c =='.').ToArray());
+            string[] parsedContent = directingContent.Split('/');
+
+            // 문자열 나누기.
+            string[] parsedPositions = parsedContent[0].Split('-');
+            // 문자열 나누기.
+            string[] parsedDurations = parsedContent[1].Split('-');
+
+            if (parsedPositions.Length < 2 || parsedDurations.Length < 1) return false;
+            if (parsedPositions.Length - 1 != parsedDurations.Length) return false;
+
+            positions = this.ParseMovePosition(parsedPositions);
+            durations = this.ParseDuration(parsedDurations);
+
             return true;
         }
         // 마지막 값을 제외한 값이 Postion 값.
-        private bool TryParseMovePosition(string directingContent, out Vector3[] positions)
+        private Vector3[] ParseMovePosition(string[] parsedPositions)
         {
-            positions = default;
+            Vector3[] positions = new Vector3[parsedPositions.Length];
 
-            // 문자열에 필요 없는 값 삭제.
-            string onlyNumbers = new string(directingContent.Where(c => char.IsDigit(c) || c == '-').ToArray());
-            // 문자열 나누기.
-            string[] parsedContent = directingContent.Split('-');
-
-            if (parsedContent.Length != 2) return false;
-
-            List<Vector3> convertedPos = new();
-
-            // 컨버트 및 변경.
-            // 화면에서 너무 멀어지는 경우 제한.
-            for (int i = 0; i < parsedContent.Length-1; ++i)
+            for(int i = 0; i < positions.Length; ++i)
             {
-                int tempPositionLayer = int.Parse(parsedContent[i]);
+                // 컨버트 및 변경.
+                int tempPositionLayer = int.Parse(parsedPositions[i]);
 
+                // 화면에서 너무 멀어지는 경우 제한.
                 if (tempPositionLayer < -2) tempPositionLayer = -2;
                 if (12 < tempPositionLayer) tempPositionLayer = 12;
 
-                convertedPos.Add(this.Get2DObjectPosition(tempPositionLayer));
+                positions[i] = this.Get2DObjectPosition(tempPositionLayer);
             }
 
-            positions = convertedPos.ToArray();
-            return true;
+            return positions;
         }
-        private bool TryParseDuration(string directingContent, out float duration)
+        private float[] ParseDuration(string[] parsedDurations)
         {
-            duration = default;
+            float[] durations = new float[parsedDurations.Length];
 
-            // 문자열에 필요 없는 값 삭제.
-            string onlyNumbers = new string(directingContent.Where(c => char.IsDigit(c) || c == '-').ToArray());
-            // 문자열 나누기.
-            string[] parsedContent = directingContent.Split('-');
+            for (int i = 0; i < durations.Length; ++i)
+            {
+                // 컨버트 및 변경.
+                float tempDuration = float.Parse(parsedDurations[i]);
 
-            if (parsedContent.Length != 1) return false;
+                // 화면에서 너무 멀어지는 경우 제한.
+                if (tempDuration <= 0) tempDuration = Time.deltaTime;
+                if (10 <= tempDuration) tempDuration = 10f;
 
-            float temp = float.Parse(parsedContent[parsedContent.Length - 1]);
+                durations[i] = tempDuration; ;
+            }
 
-            if (temp <= 0) temp = Time.deltaTime;
-            if (10 <= temp) temp = 10f;
-
-            duration = temp;
-
-            return true;
+            return durations;
         }
 
         public Vector3 Get2DObjectPosition(int horizontalIndex)

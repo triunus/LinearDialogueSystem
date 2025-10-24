@@ -12,10 +12,10 @@ namespace GameSystems.PlainServices
         public void SetAlphaValue(SpriteRenderer target, float targetAlpha);
         public void SetAlphaValue(SpriteRenderer[] targetObjects, float targetAlpha);
 
-        public IEnumerator FadeOperation(Graphic target, float startAlpha, float targetAlpha, float duration);
-        public IEnumerator FadeOperation(Graphic[] targetObjects, float startAlpha, float targetAlpha, float duration);
-        public IEnumerator FadeOperation(SpriteRenderer target, float startAlpha, float targetAlpha, float duration);
-        public IEnumerator FadeOperation(SpriteRenderer[] targetObjects, float startAlpha, float targetAlpha, float duration);   
+        public IEnumerator FadeOperation(Graphic target, float startAlpha, float targetAlpha, float duration, DTOs.BehaviourToken behaviourToken = null);
+        public IEnumerator FadeOperation(Graphic[] targetObjects, float startAlpha, float targetAlpha, float duration, DTOs.BehaviourToken behaviourToken = null);
+        public IEnumerator FadeOperation(SpriteRenderer target, float startAlpha, float targetAlpha, float duration, DTOs.BehaviourToken behaviourToken = null);
+        public IEnumerator FadeOperation(SpriteRenderer[] targetObjects, float startAlpha, float targetAlpha, float duration, DTOs.BehaviourToken behaviourToken = null);   
     }
 
     public class FadeInAndOutService : IPlainService, IFadeInAndOutService
@@ -51,7 +51,7 @@ namespace GameSystems.PlainServices
             }
         }
 
-        public IEnumerator FadeOperation(Graphic target, float startAlpha, float targetAlpha, float duration)
+        public IEnumerator FadeOperation(Graphic target, float startAlpha, float targetAlpha, float duration, DTOs.BehaviourToken behaviourToken = null)
         {
             Color tempCol = target.color;
             tempCol.a = startAlpha;
@@ -65,6 +65,8 @@ namespace GameSystems.PlainServices
             float elapsed = 0f;
             while (elapsed < duration)
             {
+                if (behaviourToken != null && behaviourToken.IsRequestEnd) yield break;
+
                 float t = Mathf.Clamp01(elapsed / duration);
                 tempCol.a = Mathf.Lerp(startAlpha, targetAlpha, t);
                 target.color = tempCol;
@@ -76,7 +78,7 @@ namespace GameSystems.PlainServices
             tempCol.a = targetAlpha;
             target.color = tempCol;
         }
-        public IEnumerator FadeOperation(Graphic[] targetObjects, float startAlpha, float targetAlpha, float duration)
+        public IEnumerator FadeOperation(Graphic[] targetObjects, float startAlpha, float targetAlpha, float duration, DTOs.BehaviourToken behaviourToken = null)
         {
             Color[] clolors = new Color[targetObjects.Length];
 
@@ -97,6 +99,8 @@ namespace GameSystems.PlainServices
             float elapsed = 0f;
             while (elapsed < duration)
             {
+                if (behaviourToken != null && behaviourToken.IsRequestEnd) yield break;
+
                 float t = Mathf.Clamp01(elapsed / duration);
 
                 for (int i = 0; i < targetObjects.Length; ++i)
@@ -121,7 +125,7 @@ namespace GameSystems.PlainServices
                 target.color = c;
             }
         }
-        public IEnumerator FadeOperation(SpriteRenderer target, float startAlpha, float targetAlpha, float duration)
+        public IEnumerator FadeOperation(SpriteRenderer target, float startAlpha, float targetAlpha, float duration, DTOs.BehaviourToken behaviourToken = null)
         {
             Color tempCol = target.color;
             tempCol.a = startAlpha;
@@ -135,6 +139,8 @@ namespace GameSystems.PlainServices
             float elapsed = 0f;
             while (elapsed < duration)
             {
+                if (behaviourToken != null && behaviourToken.IsRequestEnd) yield break;
+
                 float t = Mathf.Clamp01(elapsed / duration);
                 tempCol.a = Mathf.Lerp(startAlpha, targetAlpha, t);
                 target.color = tempCol;
@@ -146,7 +152,7 @@ namespace GameSystems.PlainServices
             tempCol.a = targetAlpha;
             target.color = tempCol;
         }
-        public IEnumerator FadeOperation(SpriteRenderer[] targetObjects, float startAlpha, float targetAlpha, float duration)
+        public IEnumerator FadeOperation(SpriteRenderer[] targetObjects, float startAlpha, float targetAlpha, float duration, DTOs.BehaviourToken behaviourToken = null)
         {
             Color[] clolors = new Color[targetObjects.Length];
 
@@ -167,6 +173,8 @@ namespace GameSystems.PlainServices
             float elapsed = 0f;
             while (elapsed < duration)
             {
+                if (behaviourToken != null && behaviourToken.IsRequestEnd) yield break;
+
                 float t = Mathf.Clamp01(elapsed / duration);
 
                 for (int i = 0; i < targetObjects.Length; ++i)

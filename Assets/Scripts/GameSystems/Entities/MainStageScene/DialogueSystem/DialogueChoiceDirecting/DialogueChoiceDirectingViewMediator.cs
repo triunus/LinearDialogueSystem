@@ -2,42 +2,54 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+using GameSystems.GameFlows.MainStageScene;
+
 namespace GameSystems.Entities.MainStageScene
 {
     public interface IDialogueChoiceDirectingViewMediator
     {
-        public bool TryDirectChoiceViewOperation(string directingContent, out IEnumerator enumerator);
+        public bool TryDirectChoiceViewOperation(string directingContent, out IEnumerator enumerator, out DTOs.BehaviourToken behaviourToken);
         public void OnClicekdChoiceButton(int choiceButtonIndex);
     }
 
     public class DialogueChoiceDirectingViewMediator : MonoBehaviour, IDialogueChoiceDirectingViewMediator, IEntity
     {
+        private IDialogueDirectingSystemGameFlow DialogueDirectingSystemGameFlow;
+
         [SerializeField] private GameObject ChoiceButtonPrefab;
         [SerializeField] private RectTransform ChoiceButtonParent;
 
         private List<IDialogueChoiceButtonView> ChoiceButtonViews = new();
 
         private bool isButtonClickBlocked;
+        private float safeWaitDuration = 0.3f;
+        private float currentWaitDuration = 0f;
 
         private void Awake()
         {
             var LocalRepository = Repository.MainStageSceneRepository.Instance;
 
             LocalRepository.Entity_LazyReferenceRepository.RegisterReference<DialogueChoiceDirectingViewMediator>(this);
+
+            this.DialogueDirectingSystemGameFlow = LocalRepository.GameFlow_LazyReferenceRepository.
+                GetOrWaitReference<DialogueDirectingSystemGameFlow>(x => this.DialogueDirectingSystemGameFlow = x);
         }
 
-        public bool TryDirectChoiceViewOperation(string directingContent, out IEnumerator enumerator)
+        public bool TryDirectChoiceViewOperation(string directingContent, out IEnumerator enumerator, out DTOs.BehaviourToken behaviourToken)
         {
             enumerator = null;
+            behaviourToken = null;
+
             // Parsing 실패 시, 종료
             if (!this.TryParseChoiceContent(directingContent, out var parsedContent)) return false;
             // 사용 가능한 ButtonView 못 가져오면, 종료.
             if (!this.TryGetUseableDialogueChoiceButtonView(out var dialogueChoiceButtonView)) return false;
 
-            enumerator = this.OperateDialogueChoiceDisplay(dialogueChoiceButtonView, parsedContent[0], int.Parse(parsedContent[1]));
+            behaviourToken = new DTOs.BehaviourToken(isRequestEnd: false);
+            enumerator = this.OperateDialogueChoiceDisplay(dialogueChoiceButtonView, parsedContent[0], int.Parse(parsedContent[1]), behaviourToken);
             return true;
         }
-        private IEnumerator OperateDialogueChoiceDisplay(IDialogueChoiceButtonView view, string choiceContent, int jumpDirectingIndex)
+        private IEnumerator OperateDialogueChoiceDisplay(IDialogueChoiceButtonView view, string choiceContent, int jumpDirectingIndex, DTOs.BehaviourToken behaviourToken)
         {
             // 버튼이 잘못 입력 되지 않도록 잠시 차단.
             this.isButtonClickBlocked = true;
@@ -51,18 +63,25 @@ namespace GameSystems.Entities.MainStageScene
             view.UpdateButtonConnect(() => this.OnClicekdChoiceButton(jumpDirectingIndex));
 
             // 안전하게 일정 시각 경과 후
-            yield return Time.deltaTime * 5;
+            while (this.currentWaitDuration < this.safeWaitDuration)
+            {
+                if (behaviourToken.IsRequestEnd) break;
+
+                this.currentWaitDuration += Time.deltaTime;
+                yield return Time.deltaTime;
+            }
 
             // 버튼 차단 해제.
             this.isButtonClickBlocked = false;
+            this.currentWaitDuration = 0;
         }
 
         private bool TryParseChoiceContent(string directingContent, out string[] parsedContent)
         {
             parsedContent = directingContent.Split('_');
 
-            if (parsedContent.Length != 2) return false;
-            else return true;
+            if (parsedContent.Length == 2) return true;
+            else return false;
         }
         private bool TryGetUseableDialogueChoiceButtonView(out IDialogueChoiceButtonView DialogueChoiceButtonView)
         {
@@ -122,6 +141,7 @@ namespace GameSystems.Entities.MainStageScene
             }
 
             // 여기서 대화 연출 시스템 기능 부분으로 연결.
+            this.DialogueDirectingSystemGameFlow.OperateDialogueDirecting(choiceButtonIndex);
         }
     }
 }
