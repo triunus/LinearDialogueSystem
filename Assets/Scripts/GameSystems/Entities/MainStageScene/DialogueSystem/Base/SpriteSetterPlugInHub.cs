@@ -26,5 +26,19 @@ namespace GameSystems.Entities.MainStageScene
             this.PlugIns[key].SetFace(faceType);
             return true;
         }
+
+        public bool TrySetSpeakerAndListenerColor(string speakerKey)
+        {
+            if (!this.PlugIns.ContainsKey(speakerKey)) return false;
+
+            foreach (var plugIn in this.PlugIns.Values)
+            {
+                plugIn.SetListenerColor();
+            }
+
+            this.PlugIns[speakerKey].SetSpeakerColor();
+
+            return true;
+        }
     }
 }

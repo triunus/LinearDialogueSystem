@@ -9,7 +9,6 @@ namespace GameSystems.Entities.MainStageScene
     public interface IDialogueTextDirectingView
     {
         public bool TryDirectTextDisplayOperation(string directingContent, out IEnumerator enumerator, out BehaviourToken behaviourToken);
-        public void OperateToFinalState_TextDisplay(string directingContent);
     }
 
     // TextDisplay
@@ -39,14 +38,12 @@ namespace GameSystems.Entities.MainStageScene
             this.SpeakerTextUI.text = string.Empty;
             this.DialogueTextUI.text = string.Empty;
 
-//            Debug.Log($"speaker : {parsedContent[0]}, Content : {parsedContent[1]}");
-
             // 화자 이름 등록.
-            this.SpeakerTextUI.text = parsedContent[0];
+            this.SpeakerTextUI.text = parsedContent[1];
 
             behaviourToken = new BehaviourToken(isRequestEnd : false);
             // 대사 출력 IEnumerator 할당
-            enumerator = this.OperateDialogueTextDisplay(parsedContent[1], this.charsPerSecond, behaviourToken);
+            enumerator = this.OperateDialogueTextDisplay(parsedContent[2], this.charsPerSecond, behaviourToken);
 
             return true;
         }
@@ -78,23 +75,12 @@ namespace GameSystems.Entities.MainStageScene
 
             this.DialogueTextUI.text = content;
         }
-        public void OperateToFinalState_TextDisplay(string directingContent)
-        {
-            if (this.DialogueTextUI == null || this.SpeakerTextUI == null) return;
-            Debug.Log($"OperateToFinalState_TextDisplay - 0");
-            // Parsing 실패.
-            if (!this.TryParseTextContent(directingContent, out var parsedContent)) return;
-
-            Debug.Log($"OperateToFinalState_TextDisplay - 1");
-            this.DialogueTextUI.text = parsedContent[1];            
-        }
-
 
         private bool TryParseTextContent(string directingContent, out string[] parsedContent)
         {
             parsedContent = directingContent.Split('_');
 
-            if (parsedContent.Length != 2) return false;
+            if (parsedContent.Length != 3) return false;
             else return true;
         }
     }

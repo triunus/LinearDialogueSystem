@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 
 using UnityEngine;
 
@@ -110,31 +109,31 @@ namespace GameSystems.GameFlows.MainStageScene
                 new DialogueDirectingData(5, "DialogueImageDirectingType", "Move_ActorB_10-8/3", false, true, true, "Next"),
                 new DialogueDirectingData(6, "DialogueImageDirectingType", "Move_ActorA_2-3-2-3-2/1.5-1.5-1.5-1.5", false, true, true, "Next"),
                 new DialogueDirectingData(7, "DialogueImageDirectingType", "FadeIn_DefaultTextPanel_1", false, false, true, "Next"),
-                new DialogueDirectingData(8, "DialogueTextDirectingType", "Actor A_안녕 Actor A야", false, true, false, "Next"),
-                new DialogueDirectingData(9, "DialogueTextDirectingType", "Actor B_Hi Actor B야", false, true, false, "Next"),
-                new DialogueDirectingData(10, "DialogueTextDirectingType", "ActorB_몇 개 기능을 실험해 볼게", false, true, false, "Next"),
+                new DialogueDirectingData(8, "DialogueTextDirectingType", "ActorA_Actor A_안녕 Actor A야", false, true, false, "Next"),
+                new DialogueDirectingData(9, "DialogueTextDirectingType", "ActorB_Actor B_Hi Actor B야", false, true, false, "Next"),
+                new DialogueDirectingData(10, "DialogueTextDirectingType", "ActorB_ActorB_몇 개 기능을 실험해 볼게", false, true, false, "Next"),
                 new DialogueDirectingData(11, "DialogueImageDirectingType", "FadeOut_ActorB_1.5", false, false, true, "Next"),
                 new DialogueDirectingData(12, "DialogueImageDirectingType", "SetAttitudeSprite_ActorB_Test", true, false, true, "Next"),
                 new DialogueDirectingData(13, "DialogueImageDirectingType", "FadeIn_ActorB_1.5", false, false, true, "Next"),
-                new DialogueDirectingData(14, "DialogueTextDirectingType", "Actor B_자, 나 뭐 바뀐거 없어?", false, true, false, "Next"),
-                new DialogueDirectingData(15, "DialogueTextDirectingType", "Player_갑자기 PTSD가 온다... 뭐가 바뀐거지?", true, false, false, "Next"),
+                new DialogueDirectingData(14, "DialogueTextDirectingType", "ActorB_Actor B_자, 나 뭐 바뀐거 없어?", false, true, false, "Next"),
+                new DialogueDirectingData(15, "DialogueTextDirectingType", "Player_Player_갑자기 PTSD가 온다... 뭐가 바뀐거지?", true, false, false, "Next"),
                 new DialogueDirectingData(16, "DialogueImageDirectingType", "FadeIn_ChoiceBackGroundUIUX_1", true, false, false, "Next"),
                 new DialogueDirectingData(17, "DialogueChoiceDirectingType", "테두리가 바뀌었다_20", true, false, false, "Next"),
                 new DialogueDirectingData(18, "DialogueChoiceDirectingType", "내부 이미지가 바뀌었다_24", true, false, false, "Next"),
                 new DialogueDirectingData(19, "DialogueChoiceDirectingType", "똑같다_28", false, false, false, "Stop"),
                 new DialogueDirectingData(20, "DialogueImageDirectingType", "FadeOut_ChoiceBackGroundUIUX_1", true, false, false, "Next"),
-                new DialogueDirectingData(21, "DialogueTextDirectingType", "Player_테두리가 바뀐거 같아", false, false, true, "Next"),
-                new DialogueDirectingData(22, "DialogueTextDirectingType", "Actor B_맞아", false, true, false, "Next"),
-                new DialogueDirectingData(23, "DialogueTextDirectingType", "Player_휴… 다행이다.", false, true, false, "Jump_32"),
+                new DialogueDirectingData(21, "DialogueTextDirectingType", "Player_Player_테두리가 바뀐거 같아", false, false, true, "Next"),
+                new DialogueDirectingData(22, "DialogueTextDirectingType", "ActorB_Actor B_맞아", false, true, false, "Next"),
+                new DialogueDirectingData(23, "DialogueTextDirectingType", "Player_Player_휴… 다행이다.", false, true, false, "Jump_32"),
                 new DialogueDirectingData(24, "DialogueImageDirectingType", "FadeOut_ChoiceBackGroundUIUX_1", true, false, false, "Next"),
-                new DialogueDirectingData(25, "DialogueTextDirectingType", "Player_내부 아이콘이 바뀐거 같아", false, false, true, "Next"),
-                new DialogueDirectingData(26, "DialogueTextDirectingType", "Actor B_아니야, 다시 기회를 줄게.", false, true, false, "Next"),
-                new DialogueDirectingData(27, "DialogueTextDirectingType", "Player_내부 아이콘은 아닌거 같다. 뭐가 바뀐거지?", true, false, false, "Jump_16"),
+                new DialogueDirectingData(25, "DialogueTextDirectingType", "Player_Player_내부 아이콘이 바뀐거 같아", false, false, true, "Next"),
+                new DialogueDirectingData(26, "DialogueTextDirectingType", "ActorB_Actor B_아니야, 다시 기회를 줄게.", false, true, false, "Next"),
+                new DialogueDirectingData(27, "DialogueTextDirectingType", "Player_Player_내부 아이콘은 아닌거 같다. 뭐가 바뀐거지?", true, false, false, "Jump_16"),
                 new DialogueDirectingData(28, "DialogueImageDirectingType", "FadeOut_ChoiceBackGroundUIUX_1", true, false, false, "Next"),
-                new DialogueDirectingData(29, "DialogueTextDirectingType", "Player_아까랑 똑같은거 같아.", false, true, false, "Next"),
-                new DialogueDirectingData(30, "DialogueTextDirectingType", "Actor B_아니야, 다시 기회를 줄게.", false, true, false, "Next"),
-                new DialogueDirectingData(31, "DialogueTextDirectingType", "Player_똑같지는 않은거 같다. 뭐가 바뀐거지?", true, false, false, "Jump_16"),
-                new DialogueDirectingData(32, "DialogueTextDirectingType", "Actor A_이번엔 다른 기능을 확인해 볼게.", false, true, false, "Next"),
+                new DialogueDirectingData(29, "DialogueTextDirectingType", "Player_Player_아까랑 똑같은거 같아.", false, true, false, "Next"),
+                new DialogueDirectingData(30, "DialogueTextDirectingType", "ActorB_Actor B_아니야, 다시 기회를 줄게.", false, true, false, "Next"),
+                new DialogueDirectingData(31, "DialogueTextDirectingType", "Player_Player_똑같지는 않은거 같다. 뭐가 바뀐거지?", true, false, false, "Jump_16"),
+                new DialogueDirectingData(32, "DialogueTextDirectingType", "ActorA_Actor A_이번엔 다른 기능을 확인해 볼게.", false, true, false, "Next"),
                 new DialogueDirectingData(33, "DialogueImageDirectingType", "SetFaceSprite_ActorA_Test", true, false, true, "End"),
             };
         }
@@ -203,7 +202,8 @@ namespace GameSystems.GameFlows.MainStageScene
             {
                 case DirectingType.DialogueTextDirectingType:
  //                   Debug.Log($"호출됨 3");
-                    if (this.DialogueTextDirectingView.TryDirectTextDisplayOperation(currentDialogueDirectingData.DirectingContent, out var textDisplayCo, out var textDisplayToken) && textDisplayCo != null)
+                    if (this.DialogueTextDirectingView.TryDirectTextDisplayOperation(currentDialogueDirectingData.DirectingContent, out var textDisplayCo, out var textDisplayToken) && textDisplayCo != null
+                        && this.DialogueImageDirectingFacade.TrySetSpeakerAndListenerColor(currentDialogueDirectingData.DirectingContent))
                     {
                         this.TextDirectingCoroutineControlData.DirectingIndex = currentDialogueDirectingData.Index;
                         this.TextDirectingCoroutineControlData.BehaviourCoroutine = StartCoroutine(textDisplayCo);
