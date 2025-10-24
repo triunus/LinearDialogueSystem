@@ -25,6 +25,9 @@ namespace GameSystems.Entities.MainStageScene
         [SerializeField] private float ShowedAlpha;
         [SerializeField] private float HidedAlpha;
 
+        [SerializeField] private Color SpeakerColor;
+        [SerializeField] private Color ListenerColor;
+
         private Dictionary<AttitudeType, Texture2D> AttitudeTexture2DSet = new();
         private Dictionary<FaceType, Texture2D> FaceTexture2DSet = new();
 
@@ -188,6 +191,18 @@ namespace GameSystems.Entities.MainStageScene
 
             // 화면 절반보다 오른쪽이면 flipX = true, 왼쪽이면 false
             AttitudeSpriteRenderer.flipX = screenPos.x > 0.5f;
+        }
+
+        public void SetSpeakerColor()
+        {
+            this.AttitudeSpriteRenderer.color = this.SpeakerColor;
+            this.FaceSpriteRenderer.color = this.SpeakerColor;
+        }
+
+        public void SetListenerColor()
+        {
+            this.AttitudeSpriteRenderer.color = this.ListenerColor;
+            this.FaceSpriteRenderer.color = this.ListenerColor;
         }
     }
 }

@@ -3503,6 +3503,8 @@ MonoBehaviour:
   FaceSpriteRenderer: {fileID: 1272092753}
   ShowedAlpha: 1
   HidedAlpha: 0
+  SpeakerColor: {r: 1, g: 1, b: 1, a: 1}
+  ListenerColor: {r: 0.5882353, g: 0.5882353, b: 0.5882353, a: 0.78431374}
   DefaultAttitude: {fileID: 2800000, guid: 6b6fd3f59ae45864286df43a2671b9f8, type: 3}
   TestAttitude: {fileID: 2800000, guid: 2244cd88542633d4794f079a4b041ce5, type: 3}
   DefaultFace: {fileID: 2800000, guid: 5988a2020badc834c96521b52b6a08f5, type: 3}
@@ -7301,6 +7303,8 @@ MonoBehaviour:
   FaceSpriteRenderer: {fileID: 5670627931957281121}
   ShowedAlpha: 1
   HidedAlpha: 0
+  SpeakerColor: {r: 1, g: 1, b: 1, a: 1}
+  ListenerColor: {r: 0.5882353, g: 0.5882353, b: 0.5882353, a: 0.78431374}
   DefaultAttitude: {fileID: 2800000, guid: 6b6fd3f59ae45864286df43a2671b9f8, type: 3}
   TestAttitude: {fileID: 2800000, guid: 2244cd88542633d4794f079a4b041ce5, type: 3}
   DefaultFace: {fileID: 2800000, guid: 97b5eb5724a79104cb6e0ad05b9db3ac, type: 3}
