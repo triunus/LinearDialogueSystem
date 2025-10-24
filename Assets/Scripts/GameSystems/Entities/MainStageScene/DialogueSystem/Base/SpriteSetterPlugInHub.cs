@@ -29,14 +29,24 @@ namespace GameSystems.Entities.MainStageScene
 
         public bool TrySetSpeakerAndListenerColor(string speakerKey)
         {
-            if (!this.PlugIns.ContainsKey(speakerKey)) return false;
-
-            foreach (var plugIn in this.PlugIns.Values)
+            if (speakerKey.Equals("Player"))
             {
-                plugIn.SetListenerColor();
+                foreach (var plugIn in this.PlugIns.Values)
+                {
+                    plugIn.SetListenerColor();
+                }
             }
+            else
+            {
+                if (!this.PlugIns.ContainsKey(speakerKey)) return false;
 
-            this.PlugIns[speakerKey].SetSpeakerColor();
+                foreach (var plugIn in this.PlugIns.Values)
+                {
+                    plugIn.SetListenerColor();
+                }
+
+                this.PlugIns[speakerKey].SetSpeakerColor();
+            }
 
             return true;
         }
