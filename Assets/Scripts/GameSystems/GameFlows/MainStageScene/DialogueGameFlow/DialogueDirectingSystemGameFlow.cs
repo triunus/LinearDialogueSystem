@@ -344,6 +344,7 @@ namespace GameSystems.GameFlows.MainStageScene
                     this.IsActivated_Temp = false;
                     Debug.Log($"끝남");
                     return false;
+                case NextDirectiveCommandType.None:
                 case NextDirectiveCommandType.Stop:
                     nextDirectingIndex = default;
                     Debug.Log($"잠시 정지");
