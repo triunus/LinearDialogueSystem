@@ -25,6 +25,8 @@
 ps. '연출 테이블', '2D 캐릭터 이미지' 등 다양한 '리소스 로드' 기능은 해당 '프로젝트 기획'에 따라 달라지는 경우가 다분하여 제외할 생각합니다. )
 
 
+## 관련 UML
+
 -- 임시 기록 중 -- 
 #### 수정된 E-R 다이어그램 : https://drive.google.com/file/d/1sp9_nr6cUr5Tn_hoPtcfk-kMK_NvdQdR/view?usp=sharing 
 #### 수정된 예상 작성 형태 : https://docs.google.com/spreadsheets/d/1_u7W4s_oY4yn4f57er6G2Q-WMZA8heKXz8naUUmPWXM/edit?usp=sharing
