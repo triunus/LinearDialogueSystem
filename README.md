@@ -7,4 +7,8 @@
 #### 수정전 FlowChart : https://drive.google.com/file/d/1OOkjpIC_HJHOJNVN_h2qunzeoP-QmN28/view?usp=sharing
 #### 수정된 FlowChart : https://drive.google.com/file/d/1G8QYRILhcR2k8LiYxUQGoUUIDBACHaHR/view?usp=sharing
 
-#### 완성된 작성 방식 : https://docs.google.com/spreadsheets/d/1LWUHIGT2I7f-VWlpmZkNvObnse6o2H_VeaBodFuuZs4/edit?usp=sharing
+
+
+#### 클래스 다이어그램 : https://drive.google.com/file/d/1PrKH2Mx-1BUf-ggsV0x5T4CmjUCTo-hL/view?usp=sharing
+
+#### 연출 데이터 테이블 작성 방식 : https://docs.google.com/spreadsheets/d/1LWUHIGT2I7f-VWlpmZkNvObnse6o2H_VeaBodFuuZs4/edit?usp=sharing
