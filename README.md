@@ -34,7 +34,7 @@ ps. '연출 테이블', '2D 캐릭터 이미지' 등 다양한 '리소스 로드
 #### 수정된 FlowChart : https://drive.google.com/file/d/1G8QYRILhcR2k8LiYxUQGoUUIDBACHaHR/view?usp=sharing
 
 
--- 임시 결과 -- 
+-- 중간 결과 -- 
 #### E-R 다이어그램 : 정리 후 추가 예정
  ( 핵심은, 서로 다른 연출에 필요한 데이터를 '_'와 같은 노이즈를 통해 1개의 연출 데이터 속성값으로 변경하여 관리하는 것입니다. )
 #### Flow Chart : 정리 후 추가 예정
@@ -43,3 +43,5 @@ ps. '연출 테이블', '2D 캐릭터 이미지' 등 다양한 '리소스 로드
  ( 주로 기억 상기시키는 용도로 사용합니다. )
 #### 연출 데이터 테이블 작성 방식 : https://docs.google.com/spreadsheets/d/1LWUHIGT2I7f-VWlpmZkNvObnse6o2H_VeaBodFuuZs4/edit?usp=sharing
  ( '스토리' 작업자에게 부담을 최대한 줄이기 위한 작업, 피드백으로 통해 지속적으로 개선할 예정입니다. )
+
+##### 모든 작업이 완료되는 시점, 각 객체간의 의존관게를 정리 후, 해당 프로젝트에서 사용하던 'Lazy 독립 참조 관리자(개선)' 부분을 참조Binder를 수행하는 클래스로 참조관계를 연결할 계획입니다.
