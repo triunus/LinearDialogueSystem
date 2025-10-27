@@ -1,5 +1,6 @@
 ﻿namespace GameSystems.DTOs
 {
+    [System.Serializable]
     public class DialogueDirectingData
     {
         public int Index;
@@ -8,8 +9,10 @@
         public string DirectingContent;
         public bool IsChainWithNext;
         public bool IsSkipable;
-        public bool IsAutoAble;
+        public bool IsAutoable;
         public string NextDirectiveCommand;
+
+        public DialogueDirectingData() { }
 
         public DialogueDirectingData(int index, string directingType, string directingContent, bool isChainWithNext, bool isSkipable, bool isAutoAble, string nextDirectiveCommand)
         {
@@ -18,7 +21,7 @@
             DirectingContent = directingContent;
             IsChainWithNext = isChainWithNext;
             IsSkipable = isSkipable;
-            IsAutoAble = isAutoAble;
+            IsAutoable = isAutoAble;
             NextDirectiveCommand = nextDirectiveCommand;
         }
     }

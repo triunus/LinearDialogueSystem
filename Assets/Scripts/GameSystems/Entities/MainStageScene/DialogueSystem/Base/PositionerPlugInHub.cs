@@ -110,7 +110,7 @@ namespace GameSystems.Entities.MainStageScene
             return durations;
         }
 
-        public Vector3 Get2DObjectPosition(int horizontalIndex)
+        private Vector3 Get2DObjectPosition(int horizontalIndex)
         {
             Camera Camera = Camera.main;
 

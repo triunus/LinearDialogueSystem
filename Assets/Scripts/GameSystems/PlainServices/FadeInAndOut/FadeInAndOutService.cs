@@ -65,7 +65,7 @@ namespace GameSystems.PlainServices
             float elapsed = 0f;
             while (elapsed < duration)
             {
-                if (behaviourToken != null && behaviourToken.IsRequestEnd) yield break;
+                if (behaviourToken != null && behaviourToken.IsRequestEnd) break;
 
                 float t = Mathf.Clamp01(elapsed / duration);
                 tempCol.a = Mathf.Lerp(startAlpha, targetAlpha, t);
@@ -99,7 +99,7 @@ namespace GameSystems.PlainServices
             float elapsed = 0f;
             while (elapsed < duration)
             {
-                if (behaviourToken != null && behaviourToken.IsRequestEnd) yield break;
+                if (behaviourToken != null && behaviourToken.IsRequestEnd) break;
 
                 float t = Mathf.Clamp01(elapsed / duration);
 
@@ -139,7 +139,7 @@ namespace GameSystems.PlainServices
             float elapsed = 0f;
             while (elapsed < duration)
             {
-                if (behaviourToken != null && behaviourToken.IsRequestEnd) yield break;
+                if (behaviourToken != null && behaviourToken.IsRequestEnd) break;
 
                 float t = Mathf.Clamp01(elapsed / duration);
                 tempCol.a = Mathf.Lerp(startAlpha, targetAlpha, t);
@@ -173,7 +173,7 @@ namespace GameSystems.PlainServices
             float elapsed = 0f;
             while (elapsed < duration)
             {
-                if (behaviourToken != null && behaviourToken.IsRequestEnd) yield break;
+                if (behaviourToken != null && behaviourToken.IsRequestEnd) break;
 
                 float t = Mathf.Clamp01(elapsed / duration);
 

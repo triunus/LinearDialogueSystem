@@ -6,35 +6,6 @@ using UnityEngine;
 using GameSystems.DTOs;
 using GameSystems.Entities.MainStageScene;
 
-namespace GameSystems.DTOs
-{
-    public class DirectingCoroutineControlData
-    {
-        public int DirectingIndex { get; set; }
-
-        public Coroutine ControlCoroutine { get; set; }
-        public Coroutine BehaviourCoroutine { get; set; }
-
-        public BehaviourToken BehaviourToken { get; set; }
-
-        public bool IsOperationEnd()
-        {
-            if (this.ControlCoroutine == null && this.BehaviourCoroutine == null) return true;
-            else return false;
-        }
-    }
-
-    public class BehaviourToken
-    {
-        public BehaviourToken(bool isRequestEnd)
-        {
-            IsRequestEnd = isRequestEnd;
-        }
-
-        public bool IsRequestEnd { get; set; }
-    }
-}
-
 namespace GameSystems.GameFlows.MainStageScene
 {
     public interface IDialogueDirectingSystemGameFlow
@@ -50,28 +21,27 @@ namespace GameSystems.GameFlows.MainStageScene
         private IDialogueTextDirectingView DialogueTextDirectingView;
         // 선택지 출력 View
         private IDialogueChoiceDirectingViewMediator DialogueChoiceDirectingViewMediator;
-        // Cutscene 출력 View
-        private IDialogueCutsceneDirectingView DialogueCutsceneDirectingView;
         // Image 연출 Hub 퍼사드
         private IDialogueImageDirectingFacade DialogueImageDirectingFacade;
+
+        // 편의를 위한 View
+        // Cutscene 출력 View
+        private IDialogueCutsceneDirectingView DialogueCutsceneDirectingView;
 
         // Text 출력 코루틴 제어를 위한 데이터.
         private DirectingCoroutineControlData TextDirectingCoroutineControlData = new();
         // CanvasUIUX, BackGround, Actor의 Action 코루틴 제어를 위한 데이터.
         private List<DirectingCoroutineControlData> ActionDirectingCoroutineControlDatas = new();
 
-        // 자동 재생 기능 코루틴.
-        private Coroutine AutoCoroutine;
-        private float AutoDuration = 2f;
-        private float currentWaitDuration = 0f;
-
+        // 연출 Data Table
         private List<DialogueDirectingData> TotalDialogueDirectingDatas;
+        //        private int currentDirectingIndex = 0;
 
-        private bool currentIsSkipable = false;
-        private bool currentIsAutoable = false;
-        private string NextDirectiveCommand = default;
+        // 자동 재생 기능 코루틴 제어 데이터.
+        private AutoPlayDirectingData AutoPlayDirectingData = new(2f);
 
-        private int currentDirectingIndex = 0;
+        // 연속적인 연출 수행을 위해, 마지막으로 수행한 연출 데이터의 내용을 기록해 놓습니다.
+        private DialogueDirectingData LastDirectingData = new();
 
         // 반복적인 테스트를 위한 임시값.
         private bool IsActivated_Temp = false;
@@ -105,7 +75,7 @@ namespace GameSystems.GameFlows.MainStageScene
                 new DialogueDirectingData(1, "DialogueImageDirectingType", "FadeIn_DefaultBackGround_1", true, false, true, "Next"),
                 new DialogueDirectingData(2, "DialogueImageDirectingType", "FadeIn_DefaultDialogueUIUX_1", false, false, true, "Next"),
                 new DialogueDirectingData(3, "DialogueImageDirectingType", "SetPosition_ActorA_2", true, false, true, "Next"),
-                new DialogueDirectingData(4, "DialogueImageDirectingType", "FadeIn_ActorA_3", false, false, true, "Next"),
+                new DialogueDirectingData(4, "DialogueImageDirectingType", "FadeIn_ActorA_3", false, true, true, "Next"),
                 new DialogueDirectingData(5, "DialogueImageDirectingType", "Move_ActorB_10-8/3", false, true, true, "Next"),
                 new DialogueDirectingData(6, "DialogueImageDirectingType", "Move_ActorA_2-3-2-3-2/1.5-1.5-1.5-1.5", false, true, true, "Next"),
                 new DialogueDirectingData(7, "DialogueImageDirectingType", "FadeIn_DefaultTextPanel_1", false, false, true, "Next"),
@@ -133,8 +103,13 @@ namespace GameSystems.GameFlows.MainStageScene
                 new DialogueDirectingData(29, "DialogueTextDirectingType", "Player_Player_아까랑 똑같은거 같아.", false, true, false, "Next"),
                 new DialogueDirectingData(30, "DialogueTextDirectingType", "ActorB_Actor B_아니야, 다시 기회를 줄게.", false, true, false, "Next"),
                 new DialogueDirectingData(31, "DialogueTextDirectingType", "Player_Player_똑같지는 않은거 같다. 뭐가 바뀐거지?", true, false, false, "Jump_16"),
-                new DialogueDirectingData(32, "DialogueTextDirectingType", "ActorA_Actor A_이번엔 다른 기능을 확인해 볼게.", false, true, false, "Next"),
-                new DialogueDirectingData(33, "DialogueImageDirectingType", "SetFaceSprite_ActorA_Test", true, false, true, "End"),
+                new DialogueDirectingData(32, "DialogueTextDirectingType", "ActorA_Actor A_일단 여기서 마무리할게", false, true, false, "Next"),
+                new DialogueDirectingData(33, "DialogueImageDirectingType", "FadeOut_DefaultTextPanel_1", false, false, true, "Next"),
+                new DialogueDirectingData(34, "DialogueImageDirectingType", "FadeOut_ActorA_1", true, false, true, "Next"),
+                new DialogueDirectingData(35, "DialogueImageDirectingType", "FadeOut_ActorB_1", false, false, true, "Next"),
+                new DialogueDirectingData(36, "DialogueImageDirectingType", "FadeOut_DefaultBackGround_1", true, false, true, "Next"),
+                new DialogueDirectingData(37, "DialogueImageDirectingType", "FadeOut_DefaultDialogueUIUX_1", false, false, true, "End"),
+//                new DialogueDirectingData(35, "DialogueImageDirectingType", "SetFaceSprite_ActorA_Test", true, false, true, "End"),
             };
         }
 /*
@@ -178,6 +153,8 @@ namespace GameSystems.GameFlows.MainStageScene
 
             this.OperateDialogueDirecting(0);
         }
+
+
         public void OperateDialogueDirecting(int currentDirectingIndex)
         {
             // 수행하고자 하는 연출 번호가 잘못된 경우, return.
@@ -186,9 +163,6 @@ namespace GameSystems.GameFlows.MainStageScene
                 Debug.Log($"잘못된 연출 번호 : {currentDirectingIndex}");
                 return;
             }
-
-            this.currentDirectingIndex = currentDirectingIndex;
-
 //            Debug.Log($"호출됨 1");
 
             // 이번에 수행할 연출 데이터 가져옴.
@@ -246,7 +220,7 @@ namespace GameSystems.GameFlows.MainStageScene
 
                         newDirectingCoroutineControlData.DirectingIndex = currentDialogueDirectingData.Index;
                         newDirectingCoroutineControlData.BehaviourCoroutine = StartCoroutine(ImageDirectingCo);
-                        newDirectingCoroutineControlData.ControlCoroutine = StartCoroutine(this.OperateActionCoroutine(currentDialogueDirectingData.Index));
+                        newDirectingCoroutineControlData.ControlCoroutine = StartCoroutine(this.OperateActionCoroutine(newDirectingCoroutineControlData.DirectingIndex));
                         newDirectingCoroutineControlData.BehaviourToken = imageBehaviourToken;
 
                         Debug.Log($"DirectingIndex : {newDirectingCoroutineControlData.DirectingIndex}, BehaviourCoroutine : {newDirectingCoroutineControlData.BehaviourCoroutine}," +
@@ -257,39 +231,24 @@ namespace GameSystems.GameFlows.MainStageScene
                     break;
             }
 
-//            Debug.Log($"호출됨 7");
+            this.LastDirectingData.Index = currentDialogueDirectingData.Index;
+            this.LastDirectingData.IsSkipable = currentDialogueDirectingData.IsSkipable;
+            this.LastDirectingData.IsAutoable = currentDialogueDirectingData.IsAutoable;
+            this.LastDirectingData.NextDirectiveCommand = currentDialogueDirectingData.NextDirectiveCommand;
+
             if (currentDialogueDirectingData.IsChainWithNext)
             {
-//                Debug.Log($"호출됨 8");
-                if (this.TryGetNextDirectingIndex(currentDialogueDirectingData.NextDirectiveCommand, out var index))
+                if (this.TryGetNextDirectingIndex(currentDialogueDirectingData.NextDirectiveCommand, out var nextIndex))
                 {
-                    this.OperateDialogueDirecting(index);
+                    this.OperateDialogueDirecting(nextIndex);
                     return;
                 }
             }
-
-//            Debug.Log($"호출됨 9");
-            this.currentIsSkipable = currentDialogueDirectingData.IsSkipable;
-            this.currentIsAutoable = currentDialogueDirectingData.IsAutoAble;
-            this.NextDirectiveCommand = currentDialogueDirectingData.NextDirectiveCommand;
         }
 
-        // 진행 중인, 코루틴 동작이 있다면, 토큰을 통하여 자연스럽게 마무리가 되도록 유도한다.
-        public void StopDialogueDirection()
-        {
-            if (!this.TextDirectingCoroutineControlData.IsOperationEnd())
-            {
-                this.TextDirectingCoroutineControlData.BehaviourToken.IsRequestEnd = true;
-            }
-
-            foreach (var controlData in this.ActionDirectingCoroutineControlDatas)
-            {
-                controlData.BehaviourToken.IsRequestEnd = true;
-            }
-        }
 
         // Action 코루틴 제어
-        public IEnumerator OperateActionCoroutine(int directingIndex)
+        private IEnumerator OperateActionCoroutine(int directingIndex)
         {
             DirectingCoroutineControlData thisDirectingCoroutineControlData = this.ActionDirectingCoroutineControlDatas.Find(x => x.DirectingIndex == directingIndex);
            
@@ -302,7 +261,7 @@ namespace GameSystems.GameFlows.MainStageScene
             this.RequestNextDirecting();
         }
         // Text 코루틴 제어
-        public IEnumerator OperateTextDisplayCoroutine()
+        private IEnumerator OperateTextDisplayCoroutine()
         {
             yield return this.TextDirectingCoroutineControlData.BehaviourCoroutine;
 
@@ -315,15 +274,14 @@ namespace GameSystems.GameFlows.MainStageScene
         private void RequestNextDirecting()
         {
             // 자동 재생 가능한가? + Text 출력 작업 끝났는가? + Action 동작 끝났는가?
-            if (this.currentIsAutoable && this.TextDirectingCoroutineControlData.IsOperationEnd() && this.ActionDirectingCoroutineControlDatas.Count == 0)
+            if (this.LastDirectingData.IsAutoable && this.TextDirectingCoroutineControlData.IsOperationEnd() && this.ActionDirectingCoroutineControlDatas.Count == 0)
             {
-                if (this.TryGetNextDirectingIndex(this.NextDirectiveCommand, out var index))
+                if (this.TryGetNextDirectingIndex(this.LastDirectingData.NextDirectiveCommand, out var index))
                 {
                     this.OperateDialogueDirecting(index);
                 }
             }
         }
-
         // 다음 수행 연출 번호를 정하는 기능
         private bool TryGetNextDirectingIndex(string nextDirectiveCommand, out int nextDirectingIndex)
         {
@@ -334,7 +292,7 @@ namespace GameSystems.GameFlows.MainStageScene
             switch(nextDirectiveCommandType)
             {
                 case NextDirectiveCommandType.Next:
-                    nextDirectingIndex = this.currentDirectingIndex + 1;
+                    nextDirectingIndex = this.LastDirectingData.Index + 1;
                     return true;
                 case NextDirectiveCommandType.Jump:
                     nextDirectingIndex = int.Parse(parsedData[1]);
@@ -357,89 +315,125 @@ namespace GameSystems.GameFlows.MainStageScene
             }
         }
 
+
+
         // 마우스 입력 기능
         // '마우스 클릭'을 통해 현재 연출을 정상적으로 마지막 상태 값을 갖도록 한다.
         public void OperateDialogueClickInteraction()
         {
-            Debug.Log($"OnClicked_Mouse - 0");
             // 해당 연출이 마우스클릭을 통해 생략이 가능한지 여부.
-            if (!this.currentIsSkipable) return;
+            if (!this.LastDirectingData.IsSkipable) return;
 
             // 연출 중이 아니라면, 다음 시퀀스 스탭 시작.
             if (this.ActionDirectingCoroutineControlDatas.Count == 0 && this.TextDirectingCoroutineControlData.IsOperationEnd())
             {
-                Debug.Log($"OnClicked_Mouse - 2");
                 // 다음에 수행할 DirectingIndex 추출 확인.
-                if (this.TryGetNextDirectingIndex(this.NextDirectiveCommand, out var index))
+                if (this.TryGetNextDirectingIndex(this.LastDirectingData.NextDirectiveCommand, out var index))
                 {
-                    Debug.Log($"OnClicked_Mouse - 3");
                     // 추출하였을 시, 해당 연출 수행.
                     this.OperateDialogueDirecting(index);
-                    this.currentWaitDuration = 0;
+                    this.AutoPlayDirectingData.CurrentWaitDuration = 0;
                 }
             }
             // 연출 중이라면, 중지 및 전부 출력.
             else
             {
-                Debug.Log($"OnClicked_Mouse - 4");
                 this.StopDialogueDirection();
             }
         }
 
+
         // Auto 재생 기능
         public void OnClickedAutoButton()
         {
-            if (this.AutoCoroutine == null)
+            if (this.AutoPlayDirectingData.AutoCoroutine == null)
             {
-                this.AutoCoroutine = StartCoroutine(this.OperateDialogueAutoDisplay());
+                this.StartCoroutine(this.OperateDialogueAutoDisplay());
             }
             else
             {
-                StopCoroutine(this.AutoCoroutine);
-                this.AutoCoroutine = null;
-                this.currentWaitDuration = 0;
+                this.AutoPlayDirectingData.IsRequestEnd = true;
+                this.AutoPlayDirectingData.Reset();
             }
         }
         private IEnumerator OperateDialogueAutoDisplay()
         {
-            this.currentWaitDuration = 0;
-
             while (true)
             {
+                if (this.AutoPlayDirectingData.IsRequestEnd) break;
+
                 //  현재 재생 중인 코루틴이 있으면 그냥 넘어감.
                 if (this.ActionDirectingCoroutineControlDatas.Count == 0 && this.TextDirectingCoroutineControlData.IsOperationEnd())
                 {
                     // 충분히 기다렸으면, 다음 대화 연출 수행 요청.
-                    if (this.currentWaitDuration >= this.AutoDuration)
+                    if (this.AutoPlayDirectingData.CurrentWaitDuration >= this.AutoPlayDirectingData.AutoWaitDuration)
                     {
-                        if (this.TryGetNextDirectingIndex(this.NextDirectiveCommand, out var index))
+                        if (this.TryGetNextDirectingIndex(this.LastDirectingData.NextDirectiveCommand, out var index))
                         {
                             this.OperateDialogueDirecting(index);
-                            this.currentWaitDuration = 0;
                         }
-                        else
-                        {
-                            this.currentWaitDuration = 0;
-                        }
+
+                        this.AutoPlayDirectingData.CurrentWaitDuration = 0;
                     }
                     // 현재 재생 중인 코루틴이 없으면 시간 증가.
                     else
                     {
-                        this.currentWaitDuration += Time.deltaTime;
+                        this.AutoPlayDirectingData.CurrentWaitDuration += Time.deltaTime;
                     }
                 }
 
                 yield return Time.deltaTime;
             }
+
+            // Auto 코루틴 초기화.
+            this.AutoPlayDirectingData.Reset();
         }
+
 
         // Skip 기능
         public void OnClickedSkipButton()
         {
             // 스킵 허용 안할시 넘어감.
-            if (!this.currentIsSkipable) return;
+            if (!this.LastDirectingData.IsSkipable) return;
 
             this.StopDialogueDirection();
+        }
+
+
+        // 진행 중인, 코루틴 동작이 있다면, 토큰을 통하여 자연스럽게 마무리가 되도록 유도한다.
+        private void StopDialogueDirection()
+        {
+            if (!this.TextDirectingCoroutineControlData.IsOperationEnd())
+            {
+                this.TextDirectingCoroutineControlData.BehaviourToken.IsRequestEnd = true;
+            }
+
+            foreach (var controlData in this.ActionDirectingCoroutineControlDatas)
+            {
+                controlData.BehaviourToken.IsRequestEnd = true;
+            }
+        }
+    }
+
+    public class AutoPlayDirectingData
+    {
+        public Coroutine AutoCoroutine { get; set; }
+
+        public float AutoWaitDuration { get; set; }
+        public float CurrentWaitDuration { get; set; }
+
+        public bool IsRequestEnd { get; set; }
+
+        public AutoPlayDirectingData(float duration)
+        {
+            this.AutoWaitDuration = duration;
+        }
+
+        public void Reset()
+        {
+            this.AutoCoroutine = null;
+            this.CurrentWaitDuration = 0f;
+            this.IsRequestEnd = false;
         }
     }
 }

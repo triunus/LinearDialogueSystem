@@ -44,14 +44,7 @@ namespace GameSystems.Entities.MainStageScene
         private IEnumerator OperateCutsceneDisplay(float fadeInDuration, float requestWaitDuration, float fadeOutDuration, DTOs.BehaviourToken behaviourToken)
         {
             // 일단 FadeOut 값으로 만들기.
-            this.FadeInAndOutService.SetAlphaValue(this.CutsceneBackGroundImage, 0);
-            this.FadeInAndOutService.SetAlphaValue(this.TitleText, 0);
-            this.FadeInAndOutService.SetAlphaValue(this.SubTitleText, 0);
-
-            // 활성화가 안되어 있으면 활성화.
-            this.CutsceneBackGroundImage.gameObject.SetActive(true);
-            this.TitleText.gameObject.SetActive(true);
-            this.SubTitleText.gameObject.SetActive(true);
+            this.StartState();
 
             yield return Time.deltaTime;
 
@@ -69,6 +62,18 @@ namespace GameSystems.Entities.MainStageScene
 
             yield return this.FadeInAndOutService.FadeOperation(new UnityEngine.UI.Graphic[] { this.CutsceneBackGroundImage, this.TitleText, this.SubTitleText }, 1, 0, fadeOutDuration, behaviourToken);
             if (behaviourToken.IsRequestEnd) this.FinalState();
+        }
+        private void StartState()
+        {
+            // 일단 FadeOut 값으로 만들기.
+            this.FadeInAndOutService.SetAlphaValue(this.CutsceneBackGroundImage, 0);
+            this.FadeInAndOutService.SetAlphaValue(this.TitleText, 0);
+            this.FadeInAndOutService.SetAlphaValue(this.SubTitleText, 0);
+
+            // 활성화가 안되어 있으면 활성화.
+            this.CutsceneBackGroundImage.gameObject.SetActive(true);
+            this.TitleText.gameObject.SetActive(true);
+            this.SubTitleText.gameObject.SetActive(true);
         }
         private void FinalState()
         {

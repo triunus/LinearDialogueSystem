@@ -86,57 +86,5 @@ namespace GameSystems.Entities.MainStageScene
 
             return true;
         }
-
-/*        public bool TryAction_Async1(string directingContent, out IEnumerator resultEnumerator, out DTOs.BehaviourToken behaviourToken)
-        {
-            resultEnumerator = null;
-            behaviourToken = null;
-
-            // parsedContent[0] : ActionType
-            // parsedContent[1] : TargetName
-            // parsedContent[2] : ActionType마다 다름.
-            string[] parsedContent = directingContent.Split('_');
-            ActionType behaviourType = (ActionType)System.Enum.Parse(typeof(ActionType), parsedContent[0]);
-
-            switch (behaviourType)
-            {
-                case ActionType.FadeIn:
-                    if (this.FaderPlugInHub.TryFadeIn(parsedContent[1], parsedContent[2], out resultEnumerator, out behaviourToken)) return true;
-                    else return false;
-                case ActionType.FadeOut:
-                    if (this.FaderPlugInHub.TryFadeOut(parsedContent[1], parsedContent[2], out resultEnumerator, out behaviourToken)) return true;
-                    else return false;
-                case ActionType.Move:
-                    if (this.PositionerPlugInHub.TryMove(parsedContent[1], parsedContent[2], out resultEnumerator, out behaviourToken)) return true;
-                    else return false;
-                default:
-                    if (this.TryAction(behaviourType, parsedContent)) return true;
-                    else return false;
-            }
-        }
-        public bool TryAction(ActionType behaviourType, string[] parsedContent)
-        {
-            switch (behaviourType)
-            {
-                case ActionType.DirectShow:
-                    if (this.ActivationPlugInHub.TryDirectShow(parsedContent[1])) return true;
-                    else return false;
-                case ActionType.DirectHide:
-                    if (this.ActivationPlugInHub.TryDirectHide(parsedContent[1])) return true;
-                    else return false;
-                case ActionType.SetAttitudeSprite:
-                    if (this.SpriteSetterPlugInHub.TrySetAttitudeTexture2D(parsedContent[1], parsedContent[2])) return true;
-                    else return false;
-                case ActionType.SetFaceSprite:
-                    if (this.SpriteSetterPlugInHub.TrySetFaceTexture2D(parsedContent[1], parsedContent[2])) return true;
-                    else return false;
-                case ActionType.SetPosition:
-                    if (this.PositionerPlugInHub.TryDirectPosition(parsedContent[1], parsedContent[2])) return true;
-                    else return false;
-                case ActionType.None:
-                default:
-                    return false;
-            }
-        }*/
     }
 }
