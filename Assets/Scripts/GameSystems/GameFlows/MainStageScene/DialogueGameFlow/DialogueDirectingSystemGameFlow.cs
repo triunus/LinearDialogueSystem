@@ -28,6 +28,10 @@ namespace GameSystems.GameFlows.MainStageScene
         // Cutscene 출력 View
         private IDialogueCutsceneDirectingView DialogueCutsceneDirectingView;
 
+        // 연출과 다른, 대화 History 관련 View
+        private IDialogueHistoryGenerator DialogueHistoryGenerator;
+
+
         // Text 출력 코루틴 제어를 위한 데이터.
         private DirectingCoroutineControlData TextDirectingCoroutineControlData = new();
         // CanvasUIUX, BackGround, Actor의 Action 코루틴 제어를 위한 데이터.
@@ -58,10 +62,14 @@ namespace GameSystems.GameFlows.MainStageScene
                 entityReferenceRepository.GetOrWaitReference<DialogueTextDirectingView>(x => this.DialogueTextDirectingView = x);
             this.DialogueChoiceDirectingViewMediator =
                 entityReferenceRepository.GetOrWaitReference<DialogueChoiceDirectingViewMediator>(x => this.DialogueChoiceDirectingViewMediator = x);
-            this.DialogueCutsceneDirectingView =
-                entityReferenceRepository.GetOrWaitReference<DialogueCutsceneDirectingView>(x => this.DialogueCutsceneDirectingView = x);
             this.DialogueImageDirectingFacade =
                 entityReferenceRepository.GetOrWaitReference<DialogueImageDirectingFacade>(x => this.DialogueImageDirectingFacade = x);
+
+            this.DialogueCutsceneDirectingView =
+                entityReferenceRepository.GetOrWaitReference<DialogueCutsceneDirectingView>(x => this.DialogueCutsceneDirectingView = x);
+
+            this.DialogueHistoryGenerator =
+                entityReferenceRepository.GetOrWaitReference<DialogueHistoryGenerator>(x => this.DialogueHistoryGenerator = x);
 
             this.InitialSetting();
 //            this.InitialSetting_Parsing();
@@ -183,6 +191,8 @@ namespace GameSystems.GameFlows.MainStageScene
                         this.TextDirectingCoroutineControlData.BehaviourCoroutine = StartCoroutine(textDisplayCo);
                         this.TextDirectingCoroutineControlData.ControlCoroutine = StartCoroutine(this.OperateTextDisplayCoroutine());
                         this.TextDirectingCoroutineControlData.BehaviourToken = textDisplayToken;
+
+                        this.DialogueHistoryGenerator.AddDialogueHistory(currentDialogueDirectingData.Index, currentDialogueDirectingData.DirectingContent);
                     }
                     break;
                 case DirectingType.DialogueChoiceDirectingType:
