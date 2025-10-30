@@ -12,23 +12,20 @@ namespace GameSystems.Entities.MainStageScene
         public bool TrySetSpeakerAndListenerColor(string directingContent);
     }
 
-    public class DialogueImageDirectingFacade : MonoBehaviour, IEntity, IDialogueImageDirectingFacade
+    public class DialogueImageDirectingFacade : IDialogueImageDirectingFacade
     {
-        private DialogueActivationPlugInHub ActivationPlugInHub;
-        private DialogueFaderPlugInHub FaderPlugInHub;
-        private DialogueSpriteSetterPlugInHub SpriteSetterPlugInHub;
-        private DialoguePositionerPlugInHub PositionerPlugInHub;
+        private IDialogueViewActivator DialogueViewActivator;
+        private IDialogueViewFader DialogueViewFader;
+        private IDialogueViewSpriteSetter DialogueViewSpriteSetter;
+        private IDialogueViewPositioner DialogueViewPositioner;
 
-        private void Awake()
+        public void InitialSetting(IDialogueViewActivator dialogueViewActivator, IDialogueViewFader dialogueViewFader,
+            IDialogueViewSpriteSetter dialogueViewSpriteSetter, IDialogueViewPositioner dialogueViewPositioner)
         {
-            var LocalEntityRepository = Repository.MainStageSceneRepository.Instance.Entity_LazyReferenceRepository;
-
-            LocalEntityRepository.RegisterReference<DialogueImageDirectingFacade>(this);
-
-            this.ActivationPlugInHub = LocalEntityRepository.GetOrCreate<DialogueActivationPlugInHub>();
-            this.FaderPlugInHub = LocalEntityRepository.GetOrCreate<DialogueFaderPlugInHub>();
-            this.SpriteSetterPlugInHub = LocalEntityRepository.GetOrCreate<DialogueSpriteSetterPlugInHub>();
-            this.PositionerPlugInHub = LocalEntityRepository.GetOrCreate<DialoguePositionerPlugInHub>();
+            this.DialogueViewActivator = dialogueViewActivator;
+            this.DialogueViewFader = dialogueViewFader;
+            this.DialogueViewSpriteSetter = dialogueViewSpriteSetter;
+            this.DialogueViewPositioner = dialogueViewPositioner;
         }
 
         public bool TryAction(string directingContent, out IEnumerator resultEnumerator, out DTOs.BehaviourToken behaviourToken)
@@ -45,28 +42,28 @@ namespace GameSystems.Entities.MainStageScene
             switch (behaviourType)
             {
                 case ActionType.FadeIn:
-                    if (this.FaderPlugInHub.TryFadeIn(parsedContent[1], parsedContent[2], out resultEnumerator, out behaviourToken)) return true;
+                    if (this.DialogueViewFader.TryFadeIn(parsedContent[1], parsedContent[2], out resultEnumerator, out behaviourToken)) return true;
                     else return false;
                 case ActionType.FadeOut:
-                    if (this.FaderPlugInHub.TryFadeOut(parsedContent[1], parsedContent[2], out resultEnumerator, out behaviourToken)) return true;
+                    if (this.DialogueViewFader.TryFadeOut(parsedContent[1], parsedContent[2], out resultEnumerator, out behaviourToken)) return true;
                     else return false;
                 case ActionType.Move:
-                    if (this.PositionerPlugInHub.TryMove(parsedContent[1], parsedContent[2], out resultEnumerator, out behaviourToken)) return true;
+                    if (this.DialogueViewPositioner.TryMove(parsedContent[1], parsedContent[2], out resultEnumerator, out behaviourToken)) return true;
                     else return false;
                 case ActionType.DirectShow:
-                    if (this.ActivationPlugInHub.TryDirectShow(parsedContent[1])) return true;
+                    if (this.DialogueViewActivator.TryDirectShow(parsedContent[1])) return true;
                     else return false;
                 case ActionType.DirectHide:
-                    if (this.ActivationPlugInHub.TryDirectHide(parsedContent[1])) return true;
+                    if (this.DialogueViewActivator.TryDirectHide(parsedContent[1])) return true;
                     else return false;
                 case ActionType.SetAttitudeSprite:
-                    if (this.SpriteSetterPlugInHub.TrySetAttitudeTexture2D(parsedContent[1], parsedContent[2])) return true;
+                    if (this.DialogueViewSpriteSetter.TrySetAttitudeTexture2D(parsedContent[1], parsedContent[2])) return true;
                     else return false;
                 case ActionType.SetFaceSprite:
-                    if (this.SpriteSetterPlugInHub.TrySetFaceTexture2D(parsedContent[1], parsedContent[2])) return true;
+                    if (this.DialogueViewSpriteSetter.TrySetFaceTexture2D(parsedContent[1], parsedContent[2])) return true;
                     else return false;
                 case ActionType.SetPosition:
-                    if (this.PositionerPlugInHub.TryDirectPosition(parsedContent[1], parsedContent[2])) return true;
+                    if (this.DialogueViewPositioner.TryDirectPosition(parsedContent[1], parsedContent[2])) return true;
                     else return false;
                 case ActionType.None:
                 default:
@@ -82,7 +79,7 @@ namespace GameSystems.Entities.MainStageScene
             string[] parsedContent = directingContent.Split('_');
             if (parsedContent.Length != 3) return false;
 
-            this.SpriteSetterPlugInHub.TrySetSpeakerAndListenerColor(parsedContent[0]);
+            this.DialogueViewSpriteSetter.TrySetSpeakerAndListenerColor(parsedContent[0]);
 
             return true;
         }

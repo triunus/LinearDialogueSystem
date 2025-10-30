@@ -5,7 +5,7 @@ using GameSystems.PlainServices;
 
 namespace GameSystems.Entities.MainStageScene
 {
-    public class DialogueSprteRendererView : MonoBehaviour, IActivation, IFadeInAndOut
+    public class DialogueSpriteRendererView : MonoBehaviour, IActivation, IFadeInAndOut
     {
         [SerializeField] private string Key;
 
@@ -19,32 +19,13 @@ namespace GameSystems.Entities.MainStageScene
 
         private void Awake()
         {
-            var GlobalRepository = Repository.GlobalSceneRepository.Instance;
-
-            this.FadeInAndOutService = GlobalRepository.PlainServices_LazyReferenceRepository.GetOrCreate<FadeInAndOutService>();
-
-            var LocalEntityRepository = Repository.MainStageSceneRepository.Instance.Entity_LazyReferenceRepository;
-
-            var DialogueActivationPlugInHub = LocalEntityRepository.GetOrCreate<DialogueActivationPlugInHub>();
-            var DialogueFaderPlugInHub = LocalEntityRepository.GetOrCreate<DialogueFaderPlugInHub>();
-
-            DialogueActivationPlugInHub.RegisterPlugIn(this.Key, this);
-            DialogueFaderPlugInHub.RegisterPlugIn(this.Key, this);
-
             this.Hide();
         }
 
-        private void OnDestroy()
+        public void InitialSetting(IFadeInAndOutService FadeInAndOutService)
         {
-            var LocalEntityRepository = Repository.MainStageSceneRepository.Instance.Entity_LazyReferenceRepository;
-
-            var DialogueActivationPlugInHub = LocalEntityRepository.GetOrCreate<DialogueActivationPlugInHub>();
-            var DialogueFaderPlugInHub = LocalEntityRepository.GetOrCreate<DialogueFaderPlugInHub>();
-
-            DialogueActivationPlugInHub.RemovePlugIn(this.Key);
-            DialogueFaderPlugInHub.RemovePlugIn(this.Key);
+            this.FadeInAndOutService = FadeInAndOutService;
         }
-
 
         public void Show()
         {

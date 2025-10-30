@@ -4,10 +4,268 @@ using System.Collections.Generic;
 using UnityEngine;
 
 using GameSystems.DTOs;
+using GameSystems.UnityServices;
+using GameSystems.Entities;
 using GameSystems.Entities.MainStageScene;
+using GameSystems.PlainServices;
 
 namespace GameSystems.GameFlows.MainStageScene
 {
+    public interface IDialoguePrefabResourceDB
+    {
+        public bool TryGetPrefabData(string prefabKey, out DialoguePrefabData prefabData);
+    }
+
+    public class DialoguePrefabResourceDB : MonoBehaviour
+    {
+        [SerializeField] private List<DialoguePrefabData> DialoguePrefabDatas;
+
+        public bool TryGetPrefabData(string prefabKey, out DialoguePrefabData prefabData)
+        {
+            prefabData = null;
+
+            foreach (var data in this.DialoguePrefabDatas)
+            {
+                if(data.PrefabKey == prefabKey)
+                {
+                    prefabData = data;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
+
+    [System.Serializable]
+    public class DialoguePrefabData
+    {
+        [SerializeField] private string prefabKey;
+        [SerializeField] private DialogueViewType dialogueViewType;
+
+        [SerializeField] private Transform prefabParent;
+        [SerializeField] private GameObject prefab;
+
+        public string PrefabKey { get => prefabKey; }
+        public DialogueViewType DialogueViewType { get => this.dialogueViewType; }
+        public Transform PrefabParent { get => prefabParent; }
+        public GameObject Prefab { get => prefab; }
+    }
+
+    [System.Serializable]
+    public enum DialogueViewType
+    {
+        SpriteView,
+        CanvasUIUXView,
+        ActorView,
+    }
+
+    public class DialogueDirectingService
+    {
+        private IDialoguePrefabResourceDB DialoguePrefabResourceDB;
+        private ICoroutineRunner CoroutineRunner;
+
+        private DialogueDirectingSystemGameFlow DialogueDirectingSystemGameFlow;
+
+        [SerializeField] private DialogueTextDirectingView DialogueTextDirectingView;
+        [SerializeField] private DialogueChoiceDirectingViewMediator DialogueChoiceDirectingViewMediator;
+
+        [SerializeField] private DialogueCutsceneDirectingView DialogueCutsceneDirectingView;
+        [SerializeField] private DialogueHistoryGenerator DialogueHistoryGenerator;
+
+        private DialogueImageDirectingFacade DialogueImageDirectingFacade;
+ 
+        private DialogueViewActivator DialogueViewActivator;
+        private DialogueViewFader DialogueViewFader;
+        private DialogueViewSpriteSetter DialogueViewSpriteSetter;
+        private DialogueViewPositioner DialogueViewPositioner;
+
+        private DialogueGenerator DialogueGenerator;
+
+        // 반복적인 테스트를 위한 임시값.
+        private bool IsActivated_Temp = false;
+
+        public DialogueDirectingService(IDialoguePrefabResourceDB dialoguePrefabResourceDB, ICoroutineRunner coroutineRunner)
+        {
+            this.DialogueDirectingSystemGameFlow = new();
+            this.DialogueGenerator = new();
+            this.DialogueImageDirectingFacade = new();
+
+            this.DialogueViewActivator = new();
+            this.DialogueViewFader = new();
+            this.DialogueViewSpriteSetter = new();
+            this.DialogueViewPositioner = new();
+
+        }
+
+        public void BindDialogueDirecting()
+        {
+            this.DialogueImageDirectingFacade.InitialSetting(this.DialogueViewActivator, this.DialogueViewFader, this.DialogueViewSpriteSetter, this.DialogueViewPositioner);
+            this.DialogueGenerator.InitialSetting(this.DialogueViewActivator, this.DialogueViewFader, this.DialogueViewSpriteSetter, this.DialogueViewPositioner);
+
+
+        }
+
+
+        // 테스트를 위해 임시로 시작하기 위한 기능
+        public void TestButtonOperation()
+        {
+            // 반복적인 재생 테스트를 위한 임시값.
+            if (this.IsActivated_Temp) return;
+            else this.IsActivated_Temp = true;
+
+            this.DialogueDirectingSystemGameFlow.OperateDialogueDirecting(0);
+        }
+    }
+
+    // 런타임 내, 생성되는 객체의 경우, 생성과 동시에, Bind가 이루어져야 됨.
+    // Generator 객체가 해당 역할을 담당함. 즉, 생명주기를 담당한다는 거지.
+    // 또한, Generator의 생성자로, Bind에 사용될 참조가 전달되면서, 일종의 DI의 역할도 수행해.
+    // 일종의 작은 Factory 인거지.
+    public class DialogueGenerator
+    {
+        private IDialoguePrefabResourceDB DialoguePrefabResourceDB;
+
+        private PlainServices.FadeInAndOutService FadeInAndOutService;
+
+        private IPlugInHub<IActivation> ActivationPlugInHub;
+        private IPlugInHub<IFadeInAndOut> FaderPlugInHub;
+        private IPlugInHub<ISpriteSetter> SpriteSetterPlugInHub;
+        private IPlugInHub<IPositioner> PositonerPlugInHub;
+
+        private Dictionary<string, GameObject> ActorObjects;
+
+        public void InitialSetting(IPlugInHub<IActivation> activationPlugInHub, IPlugInHub<IFadeInAndOut> faderPlugInHub,
+            IPlugInHub<ISpriteSetter> spriteSetterPlugInHub, IPlugInHub<IPositioner> positonerPlugInHub)
+        {
+            this.ActivationPlugInHub = activationPlugInHub;
+            this.FaderPlugInHub = faderPlugInHub;
+            this.SpriteSetterPlugInHub = spriteSetterPlugInHub;
+            this.PositonerPlugInHub = positonerPlugInHub;
+
+            this.ActorObjects = new();
+        }
+
+        public void Generate(string key, SpriteAttitudeTexture2D[] attitudeTexture2Ds, SpriteFaceTexture2D[] faceTexture2Ds)
+        {
+            GameObject newActorPrefab = Instantiate(this.ActorViewObject.ViewObjectPrefab, this.ActorViewObject.ObjectParent);
+            this.ActorObjects.Add(key, newActorPrefab);
+
+            var actorView = newActorPrefab.GetComponent<DialogueActorView>();
+            actorView.IntialSetTexture2D(key, attitudeTexture2Ds, faceTexture2Ds);
+
+            // Bind
+            this.ActivationPlugInHub.RegisterPlugIn(key, actorView);
+            this.FaderPlugInHub.RegisterPlugIn(key, actorView);
+            this.SpriteSetterPlugInHub.RegisterPlugIn(key, actorView);
+            this.PositonerPlugInHub.RegisterPlugIn(key, actorView);
+        }
+
+        // Bind 해제 및 삭제.
+        public void Remove(string key)
+        {
+            this.ActivationPlugInHub.RemovePlugIn(key);
+            this.FaderPlugInHub.RemovePlugIn(key);
+            this.SpriteSetterPlugInHub.RemovePlugIn(key);
+            this.PositonerPlugInHub.RemovePlugIn(key);
+
+            Destroy(this.ActorObjects[key]);
+            this.ActorObjects.Remove(key);
+        }
+    }
+
+    public class ActorGenerator : MonoBehaviour
+    {
+        [SerializeField] private UnityViewObjectData ActorViewObject;
+
+        private IPlugInHub<IActivation> ActivationPlugInHub;
+        private IPlugInHub<IFadeInAndOut> FaderPlugInHub;
+        private IPlugInHub<ISpriteSetter> SpriteSetterPlugInHub;
+        private IPlugInHub<IPositioner> PositonerPlugInHub;
+
+        private Dictionary<string, GameObject> ActorObjects;
+
+        public void InitialSetting(IPlugInHub<IActivation> activationPlugInHub, IPlugInHub<IFadeInAndOut> faderPlugInHub,
+            IPlugInHub<ISpriteSetter> spriteSetterPlugInHub, IPlugInHub<IPositioner> positonerPlugInHub)
+        {
+            this.ActivationPlugInHub = activationPlugInHub;
+            this.FaderPlugInHub = faderPlugInHub;
+            this.SpriteSetterPlugInHub = spriteSetterPlugInHub;
+            this.PositonerPlugInHub = positonerPlugInHub;
+
+            this.ActorObjects = new();
+        }
+
+        // 생성 및 Bind
+        public void Generate(string key, SpriteAttitudeTexture2D[] attitudeTexture2Ds, SpriteFaceTexture2D[] faceTexture2Ds)
+        {
+            GameObject newActorPrefab = Instantiate(this.ActorViewObject.ViewObjectPrefab, this.ActorViewObject.ObjectParent);
+            this.ActorObjects.Add(key, newActorPrefab);
+
+            var actorView = newActorPrefab.GetComponent<DialogueActorView>();
+            actorView.IntialSetTexture2D(key, attitudeTexture2Ds, faceTexture2Ds);
+
+            // Bind
+            this.ActivationPlugInHub.RegisterPlugIn(key, actorView);
+            this.FaderPlugInHub.RegisterPlugIn(key, actorView);
+            this.SpriteSetterPlugInHub.RegisterPlugIn(key, actorView);
+            this.PositonerPlugInHub.RegisterPlugIn(key, actorView);
+        }
+
+        // Bind 해제 및 삭제.
+        public void Remove(string key)
+        {
+            this.ActivationPlugInHub.RemovePlugIn(key);
+            this.FaderPlugInHub.RemovePlugIn(key);
+            this.SpriteSetterPlugInHub.RemovePlugIn(key);
+            this.PositonerPlugInHub.RemovePlugIn(key);
+
+            Destroy(this.ActorObjects[key]);
+            this.ActorObjects.Remove(key);
+        }
+    }
+
+    public class SpriteGenerator : MonoBehaviour
+    {
+        [SerializeField] private UnityViewObjectData SpriteViewObject;
+
+        private IPlugInHub<IActivation> ActivationPlugInHub;
+        private IPlugInHub<IFadeInAndOut> FaderPlugInHub;
+
+        private Dictionary<string, GameObject> SpriteObjects;
+
+        public void InitialSetting(IPlugInHub<IActivation> activationPlugInHub, IPlugInHub<IFadeInAndOut> faderPlugInHub)
+        {
+            this.ActivationPlugInHub = activationPlugInHub;
+            this.FaderPlugInHub = faderPlugInHub;
+
+            this.SpriteObjects = new();
+        }
+
+        // 생성 및 Bind
+        public void Generate(string key, Texture2D spriteTexture2D)
+        {
+            GameObject newActorPrefab = Instantiate(this.SpriteViewObject.ViewObjectPrefab, this.SpriteViewObject.ObjectParent);
+            this.SpriteObjects.Add(key, newActorPrefab);
+
+            var spriteView = newActorPrefab.GetComponent<DialogueSpriteRendererView>();
+
+            // Bind
+            this.ActivationPlugInHub.RegisterPlugIn(key, spriteView);
+            this.FaderPlugInHub.RegisterPlugIn(key, spriteView);
+        }
+
+        // Bind 해제 및 삭제.
+        public void Remove(string key)
+        {
+            this.ActivationPlugInHub.RemovePlugIn(key);
+            this.FaderPlugInHub.RemovePlugIn(key);
+
+            Destroy(this.SpriteObjects[key]);
+            this.SpriteObjects.Remove(key);
+        }
+    }
+
     public interface IDialogueDirectingSystemGameFlow
     {
         public void OperateDialogueDirecting(int currentDirectingIndex);
@@ -15,7 +273,7 @@ namespace GameSystems.GameFlows.MainStageScene
         public void OperateDialogueClickInteraction();
     }
 
-    public class DialogueDirectingSystemGameFlow : MonoBehaviour, IGameFlow, IDialogueDirectingSystemGameFlow
+    public class DialogueDirectingSystemGameFlow : IDialogueDirectingSystemGameFlow
     {
         // Text 출력 View
         private IDialogueTextDirectingView DialogueTextDirectingView;
@@ -31,6 +289,7 @@ namespace GameSystems.GameFlows.MainStageScene
         // 연출과 다른, 대화 History 관련 View
         private IDialogueHistoryGenerator DialogueHistoryGenerator;
 
+        private ICoroutineRunner CoroutineRunner;
 
         // Text 출력 코루틴 제어를 위한 데이터.
         private DirectingCoroutineControlData TextDirectingCoroutineControlData = new();
@@ -47,32 +306,18 @@ namespace GameSystems.GameFlows.MainStageScene
         // 연속적인 연출 수행을 위해, 마지막으로 수행한 연출 데이터의 내용을 기록해 놓습니다.
         private DialogueDirectingData LastDirectingData = new();
 
-        // 반복적인 테스트를 위한 임시값.
-        private bool IsActivated_Temp = false;
-
-        private void Awake()
+        public void InitialSetting(IDialogueTextDirectingView DialogueTextDirectingView, IDialogueChoiceDirectingViewMediator DialogueChoiceDirectingViewMediator,
+            IDialogueImageDirectingFacade DialogueImageDirectingFacade, IDialogueCutsceneDirectingView DialogueCutsceneDirectingView, IDialogueHistoryGenerator DialogueHistoryGenerator,
+            ICoroutineRunner CoroutineRunner)
         {
-            var LocalRepository = Repository.MainStageSceneRepository.Instance;
-
-            LocalRepository.GameFlow_LazyReferenceRepository.RegisterReference<DialogueDirectingSystemGameFlow>(this);
-
-            var entityReferenceRepository = LocalRepository.Entity_LazyReferenceRepository;
-
-            this.DialogueTextDirectingView =
-                entityReferenceRepository.GetOrWaitReference<DialogueTextDirectingView>(x => this.DialogueTextDirectingView = x);
-            this.DialogueChoiceDirectingViewMediator =
-                entityReferenceRepository.GetOrWaitReference<DialogueChoiceDirectingViewMediator>(x => this.DialogueChoiceDirectingViewMediator = x);
-            this.DialogueImageDirectingFacade =
-                entityReferenceRepository.GetOrWaitReference<DialogueImageDirectingFacade>(x => this.DialogueImageDirectingFacade = x);
-
-            this.DialogueCutsceneDirectingView =
-                entityReferenceRepository.GetOrWaitReference<DialogueCutsceneDirectingView>(x => this.DialogueCutsceneDirectingView = x);
-
-            this.DialogueHistoryGenerator =
-                entityReferenceRepository.GetOrWaitReference<DialogueHistoryGenerator>(x => this.DialogueHistoryGenerator = x);
+            this.DialogueTextDirectingView = DialogueTextDirectingView;
+            this.DialogueChoiceDirectingViewMediator = DialogueChoiceDirectingViewMediator;
+            this.DialogueImageDirectingFacade = DialogueImageDirectingFacade;
+            this.DialogueCutsceneDirectingView = DialogueCutsceneDirectingView;
+            this.DialogueHistoryGenerator = DialogueHistoryGenerator;
+            this.CoroutineRunner = CoroutineRunner;
 
             this.InitialSetting();
-//            this.InitialSetting_Parsing();
         }
 
         private void InitialSetting()
@@ -120,48 +365,6 @@ namespace GameSystems.GameFlows.MainStageScene
 //                new DialogueDirectingData(35, "DialogueImageDirectingType", "SetFaceSprite_ActorA_Test", true, false, true, "End"),
             };
         }
-/*
-                private async void InitialSetting_Parsing()
-                {
-                    var GlobalRepository = Repository.GlobalSceneRepository.Instance;
-
-                    PlainServices.IResourcesPathResolver resourcesPathResolver =
-                        GlobalRepository.PlainServices_LazyReferenceRepository.GetOrCreate<PlainServices.ResourcesPathResolver>();
-                    PlainServices.IJsonReadAndWriteService jsonReadAndWriteService =
-                        GlobalRepository.PlainServices_LazyReferenceRepository.GetOrCreate<PlainServices.JsonReadAndWriteService>();
-
-                    string filePath = resourcesPathResolver.GetDialogueStoryPath(DialogueStoryType.CookingStoryType, 0, DialoguePhaseType.Intro);
-
-                    this.DialogueSequenceStepDataList_Temp = await jsonReadAndWriteService.ReadAsync<DialogueSequenceStepDataList_ForJson>(filePath);
-
-                    this.SequenceStepDatas = new();
-                    foreach (var data in DialogueSequenceStepDataList_Temp.DialogueSequenceStepDatas)
-                    {
-                        this.SequenceStepDatas.Add(new(data));
-                    }
-                }
-        public void SetSequenceStepDatas(DialogueDirectingData[] dialogueDirectingDatas)
-        {
-            this.TotalDialogueDirectingDatas = new List<DialogueDirectingData>(dialogueDirectingDatas);
-        }
-
-        public bool IsDialogueSystemVaild()
-        {
-            if (this.TotalDialogueDirectingDatas == null || this.TotalDialogueDirectingDatas.Count <= 0) return false;
-            else return true;
-        }
-*/
-
-        // 테스트를 위해 임시로 시작하기 위한 기능
-        public void TestButtonOperation()
-        {
-            // 반복적인 재생 테스트를 위한 임시값.
-            if (this.IsActivated_Temp) return;
-            else this.IsActivated_Temp = true;
-
-            this.OperateDialogueDirecting(0);
-        }
-
 
         public void OperateDialogueDirecting(int currentDirectingIndex)
         {

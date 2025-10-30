@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 using GameSystems.PlainServices;
@@ -7,12 +8,7 @@ using GameSystems.DTOs;
 
 namespace GameSystems.Entities.MainStageScene
 {
-    public interface ITexture2DSetter
-    {
-        public void SetTexture2D(Texture2D texture2D);
-    }
-
-    public class DialogueActorSpriteRendererView : MonoBehaviour, IActivation, IFadeInAndOut, IPositioner, ISpriteSetter
+    public class DialogueActorView : MonoBehaviour, IActivation, IFadeInAndOut, ISpriteSetter, IPositioner
     {
         [SerializeField] private string Key;
 
@@ -28,68 +24,18 @@ namespace GameSystems.Entities.MainStageScene
         [SerializeField] private Color SpeakerColor;
         [SerializeField] private Color ListenerColor;
 
-        private Dictionary<AttitudeType, Texture2D> AttitudeTexture2DSet = new();
-        private Dictionary<FaceType, Texture2D> FaceTexture2DSet = new();
-
-        [SerializeField] private Texture2D DefaultAttitude;
-        [SerializeField] private Texture2D TestAttitude;
-        [SerializeField] private Texture2D DefaultFace;
-        [SerializeField] private Texture2D TestFace;
-
+        [SerializeField] private List<ActorAttitudeData> ActorAttitudeDatas;
+        [SerializeField] private List<ActorFaceData> ActorFaceDatas;
+        
         private void Awake()
         {
             var GlobalRepository = Repository.GlobalSceneRepository.Instance;
-
             this.FadeInAndOutService = GlobalRepository.PlainServices_LazyReferenceRepository.GetOrCreate<FadeInAndOutService>();
 
-            var LocalEntityRepository = Repository.MainStageSceneRepository.Instance.Entity_LazyReferenceRepository;
-
-            var DialogueActivationPlugInHub = LocalEntityRepository.GetOrCreate<DialogueActivationPlugInHub>();
-            var DialogueFaderPlugInHub = LocalEntityRepository.GetOrCreate<DialogueFaderPlugInHub>();
-            var DialogueSpriteSetterPlugInHub = LocalEntityRepository.GetOrCreate<DialogueSpriteSetterPlugInHub>();
-            var DialoguePositionerPlugInHub = LocalEntityRepository.GetOrCreate<DialoguePositionerPlugInHub>();
-
-            DialogueActivationPlugInHub.RegisterPlugIn(this.Key, this);
-            DialogueFaderPlugInHub.RegisterPlugIn(this.Key, this);
-            DialogueSpriteSetterPlugInHub.RegisterPlugIn(this.Key, this);
-            DialoguePositionerPlugInHub.RegisterPlugIn(this.Key, this);
-
             this.Hide();
-            this.AttitudeTexture2DSet.Add(AttitudeType.Default, DefaultAttitude);
-            this.AttitudeTexture2DSet.Add(AttitudeType.Test, TestAttitude);
-            this.FaceTexture2DSet.Add(FaceType.Default, DefaultFace);
-            this.FaceTexture2DSet.Add(FaceType.Test, TestFace);
-        }
-        private void OnDestroy()
-        {
-            var LocalEntityRepository = Repository.MainStageSceneRepository.Instance.Entity_LazyReferenceRepository;
-
-            var DialogueActivationPlugInHub = LocalEntityRepository.GetOrCreate<DialogueActivationPlugInHub>();
-            var DialogueFaderPlugInHub = LocalEntityRepository.GetOrCreate<DialogueFaderPlugInHub>();
-            var DialogueSpriteSetterPlugInHub = LocalEntityRepository.GetOrCreate<DialogueSpriteSetterPlugInHub>();
-            var DialoguePositionerPlugInHub = LocalEntityRepository.GetOrCreate<DialoguePositionerPlugInHub>();
-
-            DialogueActivationPlugInHub.RemovePlugIn(this.Key);
-            DialogueFaderPlugInHub.RemovePlugIn(this.Key);
-            DialogueSpriteSetterPlugInHub.RemovePlugIn(this.Key);
-            DialoguePositionerPlugInHub.RemovePlugIn(this.Key);
         }
 
-        public void IntialSetTexture2D(string key, SpriteAttitudeTexture2D[] spriteAttitudeTexture2Ds, SpriteFaceTexture2D[] SpriteFaceTexture2Ds)
-        {
-            this.Key = key;
-
-            foreach (var data in spriteAttitudeTexture2Ds)
-            {
-                this.AttitudeTexture2DSet.Add(data.AttitudeType, data.Texture2D);
-            }
-
-            foreach (var data in SpriteFaceTexture2Ds)
-            {
-                this.FaceTexture2DSet.Add(data.FaceType, data.Texture2D);
-            }
-        }
-
+        // IActivation
         public void Show()
         {
             this.SpriteGameObject.SetActive(true);
@@ -99,6 +45,7 @@ namespace GameSystems.Entities.MainStageScene
             this.SpriteGameObject.SetActive(false);
         }
 
+        // IFadeInAndOut
         public IEnumerator FadeIn(float duration, DTOs.BehaviourToken behaviourToken)
         {
             // 일단 FadeOut 값으로 만들기.
@@ -117,25 +64,29 @@ namespace GameSystems.Entities.MainStageScene
             this.Hide();
         }
 
+        // ISpriteSetter
         public void SetAttitude(AttitudeType attitudeType)
         {
             Debug.Log($"자세 설정 : {attitudeType}");
 
-            Texture2D texture2D = this.AttitudeTexture2DSet[attitudeType];
+            var data = this.ActorAttitudeDatas.FirstOrDefault(x => x.AttitudeType == attitudeType);
+            if (data == default) return;
 
-            this.AttitudeSpriteRenderer.sprite = Sprite.Create(texture2D, new Rect(0, 0, texture2D.width, texture2D.height), new Vector2(0.5f, 0.5f));
-            this.AttitudeSpriteRenderer.sprite.name = texture2D.name;
+            this.AttitudeSpriteRenderer.sprite = Sprite.Create(data.Texture2D, new Rect(0, 0, data.Texture2D.width, data.Texture2D.height), new Vector2(0.5f, 0.5f));
+            this.AttitudeSpriteRenderer.sprite.name = data.Texture2D.name;
         }
         public void SetFace(FaceType faceType)
         {
             Debug.Log($"표정 설정 : {faceType}");
 
-            Texture2D texture2D = this.FaceTexture2DSet[faceType];
+            var data = this.ActorFaceDatas.FirstOrDefault(x => x.FaceType == faceType);
+            if (data == default) return;
 
-            this.FaceSpriteRenderer.sprite = Sprite.Create(texture2D, new Rect(0, 0, texture2D.width, texture2D.height), new Vector2(0.5f, 0.5f));
-            this.FaceSpriteRenderer.sprite.name = texture2D.name;
+            this.FaceSpriteRenderer.sprite = Sprite.Create(data.Texture2D, new Rect(0, 0, data.Texture2D.width, data.Texture2D.height), new Vector2(0.5f, 0.5f));
+            this.FaceSpriteRenderer.sprite.name = data.Texture2D.name;
         }
 
+        // IPositioner
         public void DirectPosition(Vector3 position)
         {
             this.SpriteGameObject.transform.position = position;
@@ -181,8 +132,6 @@ namespace GameSystems.Entities.MainStageScene
             // FilpX
             this.TempFlipX();
         }
-
-
         private void TempFlipX()
         {
             Camera cam = Camera.main;
@@ -198,11 +147,29 @@ namespace GameSystems.Entities.MainStageScene
             this.AttitudeSpriteRenderer.color = this.SpeakerColor;
             this.FaceSpriteRenderer.color = this.SpeakerColor;
         }
-
         public void SetListenerColor()
         {
             this.AttitudeSpriteRenderer.color = this.ListenerColor;
             this.FaceSpriteRenderer.color = this.ListenerColor;
         }
+    }
+
+    [System.Serializable]
+    public class ActorAttitudeData
+    {
+        [SerializeField] private AttitudeType _AttitudeType;
+        [SerializeField] private Texture2D _Texture2D;
+
+        public AttitudeType AttitudeType { get => _AttitudeType; }
+        public Texture2D Texture2D { get => _Texture2D; }
+    }
+    [System.Serializable]
+    public class ActorFaceData
+    {
+        [SerializeField] private FaceType _FaceType;
+        [SerializeField] private Texture2D _Texture2D;
+
+        public FaceType FaceType { get => _FaceType; }
+        public Texture2D Texture2D { get => _Texture2D; }
     }
 }

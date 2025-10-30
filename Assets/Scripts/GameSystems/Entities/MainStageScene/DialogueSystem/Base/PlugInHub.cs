@@ -1,11 +1,17 @@
 ﻿using System.Collections.Generic;
-using UnityEngine;
+using System.Linq;
 
 namespace GameSystems.Entities.MainStageScene
 {
-    // PlugInHub
-    // Action
-    public class PlugInHub<T> where T : class
+    public interface IPlugInHub<T>
+    {
+        public void RegisterPlugIn(string key, T plugIn);
+        public void RemovePlugIn(string key);
+        public bool TryGetPlugIn(string key, out T plugIn);
+        public bool TryGetPlugIns(out T[] plugIns);
+    }
+
+    public class PlugInHub<T> : IPlugInHub<T> where T : class
     {
         protected Dictionary<string, T> PlugIns;
 
@@ -26,6 +32,27 @@ namespace GameSystems.Entities.MainStageScene
             if (!this.PlugIns.ContainsKey(key)) return;
 
             this.PlugIns.Remove(key);
+        }
+
+        public bool TryGetPlugIn(string key, out T plugIn)
+        {
+            plugIn = null;
+            if (!this.PlugIns.ContainsKey(key)) return false;
+
+            plugIn = (T)this.PlugIns[key];
+            return true;
+        }
+
+        public bool TryGetPlugIns(out T[] plugIns)
+        {
+            if (this.PlugIns == null || this.PlugIns.Count == 0)
+            {
+                plugIns = default;
+                return false;
+            }
+
+            plugIns = this.PlugIns.Values.ToArray();
+            return true;
         }
     }
 }
