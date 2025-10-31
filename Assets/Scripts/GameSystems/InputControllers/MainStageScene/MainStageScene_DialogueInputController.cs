@@ -10,7 +10,7 @@ namespace GameSystems.InputControllers.MainStageScene
 {
     public class MainStageScene_DialogueInputController : MonoBehaviour
     {
-        private DialogueDirectingSystemGameFlow DialogueDirectingSystemGameFlow;
+        private DialogueDirectingGameFlow DialogueDirectingSystemGameFlow;
 
         private void Awake()
         {
@@ -19,7 +19,7 @@ namespace GameSystems.InputControllers.MainStageScene
 
             // 참조
             this.DialogueDirectingSystemGameFlow = LocalRepository.
-                GameFlow_LazyReferenceRepository.GetOrWaitReference<DialogueDirectingSystemGameFlow>(x => this.DialogueDirectingSystemGameFlow = x);
+                GameFlow_LazyReferenceRepository.GetOrWaitReference<DialogueDirectingGameFlow>(x => this.DialogueDirectingSystemGameFlow = x);
         }
 
         private void Update()

@@ -1,5 +1,27 @@
-﻿namespace GameSystems.DTOs
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace GameSystems.DTOs
 {
+    public interface IDialogueDirectingJsonDataDB
+    {
+        public bool TryGetDialogueDirectingData(string key);
+    }
+
+    [System.Serializable]
+    public class DialogueDirectingJsonDataDB
+    {
+        List<DialogueDirectingJsonData> DialogueDirectingJsonDatas;
+    }
+
+    [System.Serializable]
+    public class DialogueDirectingJsonData
+    {
+        public string Key;
+        public TextAsset JsonFile;
+    }
+
     [System.Serializable]
     public class DialogueDirectingData
     {
