@@ -4,6 +4,8 @@ using System.Linq;
 using UnityEngine;
 using GameSystems.DTOs;
 
+using GameSystems.GameFlows.MainStageScene;
+
 namespace GameSystems.Entities.MainStageScene
 {
     public interface IDialogueViewActivator
@@ -11,32 +13,26 @@ namespace GameSystems.Entities.MainStageScene
         public bool TryDirectShow(string key);
         public bool TryDirectHide(string key);
     }
-    public class DialogueViewActivator : IPlugInHub<IActivation>, IDialogueViewActivator
+    public class DialogueViewActivator : IDialogueViewActivator
     {
-        private PlugInHub<IActivation> PlugInHub;
+        private IDialogueViewModel DialogueViewModel;
 
-        public DialogueViewActivator()
+        public DialogueViewActivator(IDialogueViewModel dialogueViewModel)
         {
-            this.PlugInHub = new();
+            this.DialogueViewModel = dialogueViewModel;
         }
-
-        // 위임된 등록 기능.
-        public void RegisterPlugIn(string key, IActivation plugIn) => this.PlugInHub.RegisterPlugIn(key, plugIn);
-        public void RemovePlugIn(string key) => this.PlugInHub.RemovePlugIn(key);
-        public bool TryGetPlugIn(string key, out IActivation plugIn) => this.PlugInHub.TryGetPlugIn(key, out plugIn);
-        public bool TryGetPlugIns(out IActivation[] plugIns) => this.PlugInHub.TryGetPlugIns(out plugIns);
 
         // 기능.
         public bool TryDirectShow(string key)
         {
-            if (!this.PlugInHub.TryGetPlugIn(key, out var viewObject)) return false;
+            if (this.DialogueViewModel.TryGet<IActivation>(key, out var viewObject)) return false;
 
             viewObject.Show();
             return true;
         }
         public bool TryDirectHide(string key)
         {
-            if (!this.PlugInHub.TryGetPlugIn(key, out var viewObject)) return false;
+            if (this.DialogueViewModel.TryGet<IActivation>(key, out var viewObject)) return false;
 
             viewObject.Hide();
             return true;
@@ -48,20 +44,14 @@ namespace GameSystems.Entities.MainStageScene
         public bool TryFadeIn(string key, string faderContent, out IEnumerator enumerator, out BehaviourToken behaviourToken);
         public bool TryFadeOut(string key, string faderContent, out IEnumerator enumerator, out BehaviourToken behaviourToken);
     }
-    public class DialogueViewFader : IPlugInHub<IFadeInAndOut>, IDialogueViewFader
+    public class DialogueViewFader : IDialogueViewFader
     {
-        private PlugInHub<IFadeInAndOut> PlugInHub;
+        private IDialogueViewModel DialogueViewModel;
 
-        public DialogueViewFader()
+        public DialogueViewFader(IDialogueViewModel dialogueViewModel)
         {
-            this.PlugInHub = new();
+            this.DialogueViewModel = dialogueViewModel;
         }
-
-        // 위임된 등록 기능.
-        public void RegisterPlugIn(string key, IFadeInAndOut plugIn) => this.PlugInHub.RegisterPlugIn(key, plugIn);
-        public void RemovePlugIn(string key) => this.PlugInHub.RemovePlugIn(key);
-        public bool TryGetPlugIn(string key, out IFadeInAndOut plugIn) => this.PlugInHub.TryGetPlugIn(key, out plugIn);
-        public bool TryGetPlugIns(out IFadeInAndOut[] plugIns) => this.PlugInHub.TryGetPlugIns(out plugIns);
 
         // 기능.
         public bool TryFadeIn(string key, string faderContent, out IEnumerator enumerator, out BehaviourToken behaviourToken)
@@ -69,7 +59,7 @@ namespace GameSystems.Entities.MainStageScene
             enumerator = null;
             behaviourToken = null;
 
-            if (this.PlugInHub.TryGetPlugIn(key, out var viewObject))
+            if (this.DialogueViewModel.TryGet<IFadeInAndOut>(key, out var viewObject))
             {
                 if (!this.TryParseDuration(faderContent, out var duration)) return false;
 

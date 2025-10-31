@@ -8,6 +8,11 @@ using GameSystems.DTOs;
 
 namespace GameSystems.Entities.MainStageScene
 {
+    public interface IDialogueViewInitialBinding
+    {
+        public void InitialSetting(IFadeInAndOutService FadeInAndOutService);
+    }
+
     public class DialogueActorView : MonoBehaviour, IActivation, IFadeInAndOut, ISpriteSetter, IPositioner
     {
         [SerializeField] private string Key;
@@ -29,10 +34,12 @@ namespace GameSystems.Entities.MainStageScene
         
         private void Awake()
         {
-            var GlobalRepository = Repository.GlobalSceneRepository.Instance;
-            this.FadeInAndOutService = GlobalRepository.PlainServices_LazyReferenceRepository.GetOrCreate<FadeInAndOutService>();
-
             this.Hide();
+        }
+
+        public void InitialSetting(IFadeInAndOutService FadeInAndOutService)
+        {
+            this.FadeInAndOutService = FadeInAndOutService;
         }
 
         // IActivation

@@ -11,20 +11,81 @@ using GameSystems.PlainServices;
 
 namespace GameSystems.GameFlows.MainStageScene
 {
-    public interface IDialoguePrefabResourceDB
+    public interface IDialogueDirectingResourceDataDB
     {
-        public bool TryGetPrefabData(string prefabKey, out DialoguePrefabData prefabData);
+        public bool TryGetDialogueDirectingResourceData(string key, out DialogueDirectingResourceData dialogueDirectingResourceData);
+    }
+    [System.Serializable]
+    public class DialogueDirectingResourceDataDB
+    {
+        [SerializeField] private List<DialogueDirectingResourceData> DialogueDirectingResourceDatas;
+
+        public bool TryGetDialogueDirectingResourceData(string key, out DialogueDirectingResourceData dialogueDirectingResourceData)
+        {
+            dialogueDirectingResourceData = null;
+            if (this.DialogueDirectingResourceDatas == null || this.DialogueDirectingResourceDatas.Count == 0) return false;
+
+            foreach(var data in this.DialogueDirectingResourceDatas)
+            {
+                if(data.Key == key)
+                {
+                    dialogueDirectingResourceData = data;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
+    [System.Serializable]
+    public class DialogueDirectingResourceData
+    {
+        private string key;
+        private List<string> ActorKeys;
+        private List<string> SpriteKeys;
+        private List<string> CanvasUIUXKeys;
+
+        public string Key { get => key; }
+        public bool TryGetActorKeys(out string[] actorKeys)
+        {
+            actorKeys = default;
+            if (this.ActorKeys == null) return false;
+
+            actorKeys = this.ActorKeys.ToArray();
+            return true;
+        }
+        public bool TryGetSpriteKeys(out string[] spriteKeys)
+        {
+            spriteKeys = default;
+            if (this.SpriteKeys == null) return false;
+
+            spriteKeys = this.SpriteKeys.ToArray();
+            return true;
+        }
+        public bool TryGetCanvasUIUXKeys(out string[] canvasUIUXKeys)
+        {
+            canvasUIUXKeys = default;
+            if (this.CanvasUIUXKeys == null) return false;
+
+            canvasUIUXKeys = this.CanvasUIUXKeys.ToArray();
+            return true;
+        }
     }
 
-    public class DialoguePrefabResourceDB : MonoBehaviour
+    public interface IDialogueDirectingPrefabResourceDB
     {
-        [SerializeField] private List<DialoguePrefabData> DialoguePrefabDatas;
+        public bool TryGetPrefabData(string prefabKey, out DialogueDirectingPrefabData prefabData);
+    }
+    [System.Serializable]
+    public class DialogueDirectingPrefabResourceDB : MonoBehaviour
+    {
+        [SerializeField] private List<DialogueDirectingPrefabData> DialogueDirectingPrefabDatas;
 
-        public bool TryGetPrefabData(string prefabKey, out DialoguePrefabData prefabData)
+        public bool TryGetPrefabData(string prefabKey, out DialogueDirectingPrefabData prefabData)
         {
             prefabData = null;
 
-            foreach (var data in this.DialoguePrefabDatas)
+            foreach (var data in this.DialogueDirectingPrefabDatas)
             {
                 if(data.PrefabKey == prefabKey)
                 {
@@ -36,34 +97,26 @@ namespace GameSystems.GameFlows.MainStageScene
             return false;
         }
     }
-
     [System.Serializable]
-    public class DialoguePrefabData
+    public class DialogueDirectingPrefabData
     {
         [SerializeField] private string prefabKey;
-        [SerializeField] private DialogueViewType dialogueViewType;
 
         [SerializeField] private Transform prefabParent;
         [SerializeField] private GameObject prefab;
 
         public string PrefabKey { get => prefabKey; }
-        public DialogueViewType DialogueViewType { get => this.dialogueViewType; }
+
         public Transform PrefabParent { get => prefabParent; }
         public GameObject Prefab { get => prefab; }
     }
 
-    [System.Serializable]
-    public enum DialogueViewType
-    {
-        SpriteView,
-        CanvasUIUXView,
-        ActorView,
-    }
-
     public class DialogueDirectingService
     {
-        private IDialoguePrefabResourceDB DialoguePrefabResourceDB;
+        private IDialogueDirectingPrefabResourceDB DialoguePrefabResourceDB;
         private ICoroutineRunner CoroutineRunner;
+
+        private DialogueViewModel DialogueViewModel;
 
         private DialogueDirectingSystemGameFlow DialogueDirectingSystemGameFlow;
 
@@ -85,8 +138,10 @@ namespace GameSystems.GameFlows.MainStageScene
         // 반복적인 테스트를 위한 임시값.
         private bool IsActivated_Temp = false;
 
-        public DialogueDirectingService(IDialoguePrefabResourceDB dialoguePrefabResourceDB, ICoroutineRunner coroutineRunner)
+        public DialogueDirectingService(IDialogueDirectingPrefabResourceDB dialoguePrefabResourceDB, ICoroutineRunner coroutineRunner)
         {
+            this.DialogueViewModel = new();
+
             this.DialogueDirectingSystemGameFlow = new();
             this.DialogueGenerator = new();
             this.DialogueImageDirectingFacade = new();
@@ -118,151 +173,116 @@ namespace GameSystems.GameFlows.MainStageScene
         }
     }
 
+    public interface IDialogueViewModel : IMultiPlugInHub
+    {
+        public void RegisterViewObject(string key, GameObject viewObject);
+        public void RemoveViewObject(string key);
+        public bool TryGetViewObject(string key, out GameObject viewObject);
+    }
+    public class DialogueViewModel : IDialogueViewModel
+    {
+        private MultiPlugInHub MultiPlugInHub;
+
+        private Dictionary<string, GameObject> ViewObjects;
+
+        public DialogueViewModel()
+        {
+            this.MultiPlugInHub = new();
+            this.ViewObjects = new();
+        }
+
+        // T 위임된 등록/해제/Get 기능
+        public void Register<T>(string key, T plugIn) where T : class => this.MultiPlugInHub.Register<T>(key, plugIn);
+        public void Remove<T>(string key) where T : class => this.MultiPlugInHub.Remove<T>(key);
+        public bool TryGet<T>(string key, out T plugIn) where T : class => this.MultiPlugInHub.TryGet<T>(key, out plugIn);
+        public bool TryGetAll<T>(out T[] plugIns) where T : class => this.MultiPlugInHub.TryGetAll<T>(out plugIns);
+
+        // ActorObjects 등록/해제
+        public void RegisterViewObject(string key, GameObject viewObject)
+        {
+            if (this.ViewObjects.ContainsKey(key)) return;
+
+            this.ViewObjects.Add(key, viewObject);
+        }
+        public void RemoveViewObject(string key)
+        {
+            if (!this.ViewObjects.ContainsKey(key)) return;
+
+            this.ViewObjects.Remove(key);
+        }
+        public bool TryGetViewObject(string key, out GameObject viewObject)
+        {
+            viewObject = null;
+            if (!this.ViewObjects.ContainsKey(key)) return false;
+
+            viewObject = this.ViewObjects[key];
+            return true;
+        }
+    }
+
     // 런타임 내, 생성되는 객체의 경우, 생성과 동시에, Bind가 이루어져야 됨.
     // Generator 객체가 해당 역할을 담당함. 즉, 생명주기를 담당한다는 거지.
     // 또한, Generator의 생성자로, Bind에 사용될 참조가 전달되면서, 일종의 DI의 역할도 수행해.
     // 일종의 작은 Factory 인거지.
     public class DialogueGenerator
     {
-        private IDialoguePrefabResourceDB DialoguePrefabResourceDB;
+        private IDialogueDirectingResourceDataDB DialogueResourceDataDB;
+        private IDialogueDirectingPrefabResourceDB DialoguePrefabResourceDB;
+        private IDialogueViewModel DialogueViewModel;
 
-        private PlainServices.FadeInAndOutService FadeInAndOutService;
+        private FadeInAndOutService FadeInAndOutService;
 
-        private IPlugInHub<IActivation> ActivationPlugInHub;
-        private IPlugInHub<IFadeInAndOut> FaderPlugInHub;
-        private IPlugInHub<ISpriteSetter> SpriteSetterPlugInHub;
-        private IPlugInHub<IPositioner> PositonerPlugInHub;
-
-        private Dictionary<string, GameObject> ActorObjects;
-
-        public void InitialSetting(IPlugInHub<IActivation> activationPlugInHub, IPlugInHub<IFadeInAndOut> faderPlugInHub,
-            IPlugInHub<ISpriteSetter> spriteSetterPlugInHub, IPlugInHub<IPositioner> positonerPlugInHub)
+        public void InitialSetting(IDialogueDirectingResourceDataDB dialogueResourceDataDB, 
+            IDialogueDirectingPrefabResourceDB dialoguePrefabResourceDB, IDialogueViewModel dialogueViewModel)
         {
-            this.ActivationPlugInHub = activationPlugInHub;
-            this.FaderPlugInHub = faderPlugInHub;
-            this.SpriteSetterPlugInHub = spriteSetterPlugInHub;
-            this.PositonerPlugInHub = positonerPlugInHub;
+            this.DialogueResourceDataDB = dialogueResourceDataDB;
+            this.DialoguePrefabResourceDB = dialoguePrefabResourceDB;
+            this.DialogueViewModel = dialogueViewModel;
 
-            this.ActorObjects = new();
+            this.FadeInAndOutService = new();
         }
 
-        public void Generate(string key, SpriteAttitudeTexture2D[] attitudeTexture2Ds, SpriteFaceTexture2D[] faceTexture2Ds)
+        public void SetDialogueService(string dialogueIndex)
         {
-            GameObject newActorPrefab = Instantiate(this.ActorViewObject.ViewObjectPrefab, this.ActorViewObject.ObjectParent);
-            this.ActorObjects.Add(key, newActorPrefab);
+            if(!this.DialogueResourceDataDB.TryGetDialogueDirectingResourceData(dialogueIndex, out var dialogueDirectingResourceData)) 
+            {
+                Debug.Log($"Key에 대응되는 대화 연출 리소스 정보가 없습니다.");
+                return;
+            }
+
+
+        }
+
+        public void ResetDialogueService()
+        {
+
+        }
+
+        public void ActorViewGenerate(DialogueDirectingPrefabData dialogueDirectingPrefabData)
+        {
+            GameObject newActorPrefab = MonoBehaviour.Instantiate(dialogueDirectingPrefabData.Prefab, dialogueDirectingPrefabData.PrefabParent);
+            this.DialogueViewModel.RegisterViewObject(dialogueDirectingPrefabData.PrefabKey, newActorPrefab);
 
             var actorView = newActorPrefab.GetComponent<DialogueActorView>();
-            actorView.IntialSetTexture2D(key, attitudeTexture2Ds, faceTexture2Ds);
-
-            // Bind
-            this.ActivationPlugInHub.RegisterPlugIn(key, actorView);
-            this.FaderPlugInHub.RegisterPlugIn(key, actorView);
-            this.SpriteSetterPlugInHub.RegisterPlugIn(key, actorView);
-            this.PositonerPlugInHub.RegisterPlugIn(key, actorView);
+            this.DialogueViewModel.Register<IActivation>(dialogueDirectingPrefabData.PrefabKey, actorView);
+            this.DialogueViewModel.Register<IFadeInAndOut>(dialogueDirectingPrefabData.PrefabKey, actorView);
+            this.DialogueViewModel.Register<ISpriteSetter>(dialogueDirectingPrefabData.PrefabKey, actorView);
+            this.DialogueViewModel.Register<IPositioner>(dialogueDirectingPrefabData.PrefabKey, actorView);
         }
 
-        // Bind 해제 및 삭제.
-        public void Remove(string key)
+        public void SpriteViewGenerate(DialogueDirectingPrefabData dialogueDirectingPrefabData)
         {
-            this.ActivationPlugInHub.RemovePlugIn(key);
-            this.FaderPlugInHub.RemovePlugIn(key);
-            this.SpriteSetterPlugInHub.RemovePlugIn(key);
-            this.PositonerPlugInHub.RemovePlugIn(key);
+            GameObject newSpritePrefab = MonoBehaviour.Instantiate(dialogueDirectingPrefabData.Prefab, dialogueDirectingPrefabData.PrefabParent);
+            this.DialogueViewModel.RegisterViewObject(dialogueDirectingPrefabData.PrefabKey, newSpritePrefab);
 
-            Destroy(this.ActorObjects[key]);
-            this.ActorObjects.Remove(key);
-        }
-    }
-
-    public class ActorGenerator : MonoBehaviour
-    {
-        [SerializeField] private UnityViewObjectData ActorViewObject;
-
-        private IPlugInHub<IActivation> ActivationPlugInHub;
-        private IPlugInHub<IFadeInAndOut> FaderPlugInHub;
-        private IPlugInHub<ISpriteSetter> SpriteSetterPlugInHub;
-        private IPlugInHub<IPositioner> PositonerPlugInHub;
-
-        private Dictionary<string, GameObject> ActorObjects;
-
-        public void InitialSetting(IPlugInHub<IActivation> activationPlugInHub, IPlugInHub<IFadeInAndOut> faderPlugInHub,
-            IPlugInHub<ISpriteSetter> spriteSetterPlugInHub, IPlugInHub<IPositioner> positonerPlugInHub)
-        {
-            this.ActivationPlugInHub = activationPlugInHub;
-            this.FaderPlugInHub = faderPlugInHub;
-            this.SpriteSetterPlugInHub = spriteSetterPlugInHub;
-            this.PositonerPlugInHub = positonerPlugInHub;
-
-            this.ActorObjects = new();
+            var spriteView = newSpritePrefab.GetComponent<DialogueSpriteRendererView>();
+            this.DialogueViewModel.Register<IActivation>(dialogueDirectingPrefabData.PrefabKey, spriteView);
+            this.DialogueViewModel.Register<IFadeInAndOut>(dialogueDirectingPrefabData.PrefabKey, spriteView);
         }
 
-        // 생성 및 Bind
-        public void Generate(string key, SpriteAttitudeTexture2D[] attitudeTexture2Ds, SpriteFaceTexture2D[] faceTexture2Ds)
+        public void CanvasUIUXViewGenerate(DialogueDirectingPrefabData dialogueDirectingPrefabData)
         {
-            GameObject newActorPrefab = Instantiate(this.ActorViewObject.ViewObjectPrefab, this.ActorViewObject.ObjectParent);
-            this.ActorObjects.Add(key, newActorPrefab);
 
-            var actorView = newActorPrefab.GetComponent<DialogueActorView>();
-            actorView.IntialSetTexture2D(key, attitudeTexture2Ds, faceTexture2Ds);
-
-            // Bind
-            this.ActivationPlugInHub.RegisterPlugIn(key, actorView);
-            this.FaderPlugInHub.RegisterPlugIn(key, actorView);
-            this.SpriteSetterPlugInHub.RegisterPlugIn(key, actorView);
-            this.PositonerPlugInHub.RegisterPlugIn(key, actorView);
-        }
-
-        // Bind 해제 및 삭제.
-        public void Remove(string key)
-        {
-            this.ActivationPlugInHub.RemovePlugIn(key);
-            this.FaderPlugInHub.RemovePlugIn(key);
-            this.SpriteSetterPlugInHub.RemovePlugIn(key);
-            this.PositonerPlugInHub.RemovePlugIn(key);
-
-            Destroy(this.ActorObjects[key]);
-            this.ActorObjects.Remove(key);
-        }
-    }
-
-    public class SpriteGenerator : MonoBehaviour
-    {
-        [SerializeField] private UnityViewObjectData SpriteViewObject;
-
-        private IPlugInHub<IActivation> ActivationPlugInHub;
-        private IPlugInHub<IFadeInAndOut> FaderPlugInHub;
-
-        private Dictionary<string, GameObject> SpriteObjects;
-
-        public void InitialSetting(IPlugInHub<IActivation> activationPlugInHub, IPlugInHub<IFadeInAndOut> faderPlugInHub)
-        {
-            this.ActivationPlugInHub = activationPlugInHub;
-            this.FaderPlugInHub = faderPlugInHub;
-
-            this.SpriteObjects = new();
-        }
-
-        // 생성 및 Bind
-        public void Generate(string key, Texture2D spriteTexture2D)
-        {
-            GameObject newActorPrefab = Instantiate(this.SpriteViewObject.ViewObjectPrefab, this.SpriteViewObject.ObjectParent);
-            this.SpriteObjects.Add(key, newActorPrefab);
-
-            var spriteView = newActorPrefab.GetComponent<DialogueSpriteRendererView>();
-
-            // Bind
-            this.ActivationPlugInHub.RegisterPlugIn(key, spriteView);
-            this.FaderPlugInHub.RegisterPlugIn(key, spriteView);
-        }
-
-        // Bind 해제 및 삭제.
-        public void Remove(string key)
-        {
-            this.ActivationPlugInHub.RemovePlugIn(key);
-            this.FaderPlugInHub.RemovePlugIn(key);
-
-            Destroy(this.SpriteObjects[key]);
-            this.SpriteObjects.Remove(key);
         }
     }
 
