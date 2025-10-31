@@ -54,4 +54,8 @@
 #### 연출 데이터 테이블 작성 방식 : https://docs.google.com/spreadsheets/d/1LWUHIGT2I7f-VWlpmZkNvObnse6o2H_VeaBodFuuZs4/edit?usp=sharing
  ( '스토리' 작업자에게 부담을 최대한 줄이기 위한 작업, 피드백으로 통해 지속적으로 개선할 예정입니다. )
 
+#### Binder 참조 관계 예상도 : https://drive.google.com/file/d/1IEKX7EBx9BUI_SpUY6qHi7LSaOAuhKAW/view?usp=sharing
+
 ##### 모든 작업이 완료되는 시점, 각 객체간의 의존관게를 정리 후, 해당 프로젝트에서 사용하던 'Lazy 독립 참조 관리자(개선)' 부분을 참조Binder를 수행하는 클래스로 참조관계를 연결할 계획입니다.
+
+
