@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿/*using System.Collections.Generic;
 
 using UnityEngine;
 
@@ -44,5 +44,4 @@ namespace GameSystems.DTOs
         public Transform PrefabParent { get => prefabParent; }
         public GameObject Prefab { get => prefab; }
     }
-
-}
+}*/

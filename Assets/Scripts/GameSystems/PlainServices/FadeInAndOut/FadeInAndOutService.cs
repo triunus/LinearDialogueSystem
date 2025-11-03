@@ -3,7 +3,9 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace GameSystems.PlainServices
+using GameSystems.DialogueDirectingService.Datas;
+
+namespace GameSystems.DialogueDirectingService.PlainServices
 {
     public interface IFadeInAndOutService
     {
@@ -12,13 +14,13 @@ namespace GameSystems.PlainServices
         public void SetAlphaValue(SpriteRenderer target, float targetAlpha);
         public void SetAlphaValue(SpriteRenderer[] targetObjects, float targetAlpha);
 
-        public IEnumerator FadeOperation(Graphic target, float startAlpha, float targetAlpha, float duration, DTOs.BehaviourToken behaviourToken = null);
-        public IEnumerator FadeOperation(Graphic[] targetObjects, float startAlpha, float targetAlpha, float duration, DTOs.BehaviourToken behaviourToken = null);
-        public IEnumerator FadeOperation(SpriteRenderer target, float startAlpha, float targetAlpha, float duration, DTOs.BehaviourToken behaviourToken = null);
-        public IEnumerator FadeOperation(SpriteRenderer[] targetObjects, float startAlpha, float targetAlpha, float duration, DTOs.BehaviourToken behaviourToken = null);   
+        public IEnumerator FadeOperation(Graphic target, float startAlpha, float targetAlpha, float duration, BehaviourToken behaviourToken = null);
+        public IEnumerator FadeOperation(Graphic[] targetObjects, float startAlpha, float targetAlpha, float duration, BehaviourToken behaviourToken = null);
+        public IEnumerator FadeOperation(SpriteRenderer target, float startAlpha, float targetAlpha, float duration, BehaviourToken behaviourToken = null);
+        public IEnumerator FadeOperation(SpriteRenderer[] targetObjects, float startAlpha, float targetAlpha, float duration, BehaviourToken behaviourToken = null);   
     }
 
-    public class FadeInAndOutService : IPlainService, IFadeInAndOutService
+    public class FadeInAndOutService : IFadeInAndOutService
     {
         public void SetAlphaValue(Graphic target, float targetAlpha)
         {
@@ -51,7 +53,7 @@ namespace GameSystems.PlainServices
             }
         }
 
-        public IEnumerator FadeOperation(Graphic target, float startAlpha, float targetAlpha, float duration, DTOs.BehaviourToken behaviourToken = null)
+        public IEnumerator FadeOperation(Graphic target, float startAlpha, float targetAlpha, float duration, BehaviourToken behaviourToken = null)
         {
             Color tempCol = target.color;
             tempCol.a = startAlpha;
@@ -78,7 +80,7 @@ namespace GameSystems.PlainServices
             tempCol.a = targetAlpha;
             target.color = tempCol;
         }
-        public IEnumerator FadeOperation(Graphic[] targetObjects, float startAlpha, float targetAlpha, float duration, DTOs.BehaviourToken behaviourToken = null)
+        public IEnumerator FadeOperation(Graphic[] targetObjects, float startAlpha, float targetAlpha, float duration, BehaviourToken behaviourToken = null)
         {
             Color[] clolors = new Color[targetObjects.Length];
 
@@ -125,7 +127,7 @@ namespace GameSystems.PlainServices
                 target.color = c;
             }
         }
-        public IEnumerator FadeOperation(SpriteRenderer target, float startAlpha, float targetAlpha, float duration, DTOs.BehaviourToken behaviourToken = null)
+        public IEnumerator FadeOperation(SpriteRenderer target, float startAlpha, float targetAlpha, float duration, BehaviourToken behaviourToken = null)
         {
             Color tempCol = target.color;
             tempCol.a = startAlpha;
@@ -152,7 +154,7 @@ namespace GameSystems.PlainServices
             tempCol.a = targetAlpha;
             target.color = tempCol;
         }
-        public IEnumerator FadeOperation(SpriteRenderer[] targetObjects, float startAlpha, float targetAlpha, float duration, DTOs.BehaviourToken behaviourToken = null)
+        public IEnumerator FadeOperation(SpriteRenderer[] targetObjects, float startAlpha, float targetAlpha, float duration, BehaviourToken behaviourToken = null)
         {
             Color[] clolors = new Color[targetObjects.Length];
 

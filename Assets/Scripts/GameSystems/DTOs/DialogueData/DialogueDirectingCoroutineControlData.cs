@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿/*using System.Collections.Generic;
 
 using UnityEngine;
 
@@ -52,3 +52,4 @@ namespace GameSystems.DTOs
         public bool IsRequestEnd { get; set; }
     }
 }
+*/

@@ -1,25 +1,36 @@
-﻿/*using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+
 using UnityEngine;
 
-namespace GameSystems.DTOs
+namespace GameSystems.DialogueDirectingService.Datas
 {
-    public interface IDialogueDirectingJsonDataDB
+    public interface IDialogueDirectingDataGroup
     {
-        public bool TryGetDialogueDirectingData(string key);
+        public bool TryGetDialogueDirectingData(int directingIndex, out DialogueDirectingData dialogueDirectingData);
     }
 
     [System.Serializable]
-    public class DialogueDirectingJsonDataDB
+    public class DialogueDirectingDataGroup
     {
-        List<DialogueDirectingJsonData> DialogueDirectingJsonDatas;
-    }
+        [SerializeField] private List<DialogueDirectingData> DialogueDirectingDatas;
 
-    [System.Serializable]
-    public class DialogueDirectingJsonData
-    {
-        public string Key;
-        public TextAsset JsonFile;
+        public int Count => this.DialogueDirectingDatas.Count;
+
+        public bool TryGetDialogueDirectingData(int directingIndex, out DialogueDirectingData dialogueDirectingData)
+        {
+            dialogueDirectingData = null;
+
+            foreach (var data in this.DialogueDirectingDatas)
+            {
+                if(data.Index == directingIndex)
+                {
+                    dialogueDirectingData = data;
+                    return true;
+                }
+            }
+
+            return false;
+        }
     }
 
     [System.Serializable]
@@ -98,4 +109,4 @@ namespace GameSystems.DTOs
 
         Test
     }
-}*/
+}
