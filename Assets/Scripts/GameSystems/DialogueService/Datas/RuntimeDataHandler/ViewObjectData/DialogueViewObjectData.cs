@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+Ôªøusing System.Collections.Generic;
 using UnityEngine;
 
 using Foundations.PlugInHub;
@@ -9,13 +9,14 @@ namespace GameSystems.DialogueDirectingService.Datas
     {
         public void RegisterViewObject(string key, GameObject viewObject);
         public void RemoveViewObject(string key);
-        public bool TryGetViewObject(string key, out GameObject viewObject);
+        public bool IsViewObjectContained(string key);
     }
 
-    public class DialogueViewObjectData : MonoBehaviour, IMultiPlugInHub, IDialogueViewObjectData
+    public class DialogueViewObjectData : IMultiPlugInHub, IDialogueViewObjectData
     {
-        private MultiPlugInHub MultiPlugInHub;
         private Dictionary<string, GameObject> ViewObjects;
+
+        private MultiPlugInHub MultiPlugInHub;
 
         public DialogueViewObjectData()
         {
@@ -23,13 +24,13 @@ namespace GameSystems.DialogueDirectingService.Datas
             this.ViewObjects = new();
         }
 
-        // T ¿ß¿”µ» µÓ∑œ/«ÿ¡¶/Get ±‚¥…
+        // PlugIn Í¥ÄÎ¶¨ ÏúÑÏûÑ.
         public void RegisterPlugIn<T>(string key, T plugIn) where T : class => this.MultiPlugInHub.RegisterPlugIn<T>(key, plugIn);
         public void RemovePlugIn<T>(string key) where T : class => this.MultiPlugInHub.RemovePlugIn<T>(key);
-        public bool TryGetPlugIn<T>(string key, out T plugIn) where T : class => this.MultiPlugInHub.TryGetPlugIn<T>(key, out plugIn);
         public bool TryGetAllPlugIn<T>(out T[] plugIns) where T : class => this.MultiPlugInHub.TryGetAllPlugIn<T>(out plugIns);
+        public bool TryGetPlugIn<T>(string key, out T plugIn) where T : class => this.MultiPlugInHub.TryGetPlugIn<T>(key, out plugIn);
 
-        // DialogueViewObjects µÓ∑œ/«ÿ¡¶
+        // Dialogue ÏãúÏä§ÌÖúÏóêÏÑú ÏÉàÎ°ú ÏÉùÏÑ±Îêú Object Í¥ÄÎ¶¨.
         public void RegisterViewObject(string key, GameObject viewObject)
         {
             if (this.ViewObjects.ContainsKey(key)) return;
@@ -42,13 +43,10 @@ namespace GameSystems.DialogueDirectingService.Datas
 
             this.ViewObjects.Remove(key);
         }
-        public bool TryGetViewObject(string key, out GameObject viewObject)
+        public bool IsViewObjectContained(string key)
         {
-            viewObject = null;
-            if (!this.ViewObjects.ContainsKey(key)) return false;
-
-            viewObject = this.ViewObjects[key];
-            return true;
+            if (this.ViewObjects.ContainsKey(key)) return true;
+            else return false;
         }
     }
 }

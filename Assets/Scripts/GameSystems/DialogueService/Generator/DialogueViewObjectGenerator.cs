@@ -1,5 +1,6 @@
 using UnityEngine;
 
+using Foundations.PlugInHub;
 using GameSystems.DialogueDirectingService.PlainServices;
 using GameSystems.DialogueDirectingService.Datas;
 
@@ -7,45 +8,38 @@ namespace GameSystems.DialogueDirectingService.Generator
 {
     public interface IDialogueOutputViewBinding
     {
-        public void InitialBinding(string key, IDialogueViewObjectData dialogueViewModel, IFadeInAndOutService fadeInAndOutService = null);
+        public void InitialBinding(string viewObejctKey, IMultiPlugInHub  multiPlugInHub, IFadeInAndOutService fadeInAndOutService = null);
     }
 
-    // ViewObject를 생성하기 위한, 리소스를 가져와야 됨.
-    // Resource 정보를 모아놓은 json이 있음.
-    // 이러한 Json 파일을 연출Index에 대응되도록 SO 파일이 있어.
-
-    // PrefabKey에 대응되는 Prefab이 있어.
-
-    // 2개의 SO를 가져와야 되고,
-    // 1개의 Json을 파싱해서 Data화 시켜야 되.
-    public class DialogueViewObjectGenerator
+    public interface IDialogueViewObjectGenerator
     {
-        private IDialogueDirectingResourceJsonDataSO DialogueDirectingResourceJsonDataSO;
+        // 따로 Key 값이 존재하는 경우, ( Prefab을 중복으로 사용하여, 따로 고유키가 필요 )
+        public bool TryGenerateViewObject(string prefabKey, string viewObjectKey);
+        // Prefab Key값이 곧 고유키가 되는 경우. ( Prefab을 중복 사용하지 않음. )
+        public bool TryGenerateViewObject(string prefabkey);
+    }
+
+    public class DialogueViewObjectGenerator : IDialogueViewObjectGenerator
+    {
         private IDialogueDirectingPrefabDataSO DialogueDirectingPrefabDataSO;
-
-        private IDialogueViewObjectData DialogueViewObjectData;
-
-        private string resourceJsonDataSOPath = "ScriptableObject/DialogueDirectingService/ResourceJsonDataSOPath";
         private string prefabSOPath = "ScriptableObject/DialogueDirectingService/PrefabSOPath";
 
-        public DialogueViewObjectGenerator(IDialogueViewObjectData dialogueViewModel)
+        private IMultiPlugInHub MultiPlugInHub;
+        private IDialogueViewObjectData DialogueViewObjectData;
+
+        private FadeInAndOutService fadeInAndOutService = new();
+
+        public DialogueViewObjectGenerator(IMultiPlugInHub multiPlugInHub, IDialogueViewObjectData dialogueViewObjectData)
         {
-            this.DialogueViewObjectData = dialogueViewModel;
+            this.MultiPlugInHub = multiPlugInHub;
+            this.DialogueViewObjectData = dialogueViewObjectData;
 
             this.SetScriptableObject();
         }
-
+        // Generate를 수행할 SO를 미리 셋팅.
         private void SetScriptableObject()
         {
             ScriptableObjectLoader ScriptableObjectLoader = new();
-
-            // 해당 연출 Index에 대응되는 필요 리소스정보들이 담긴 SO를 가져오지 못한 경우 리턴.
-            if (!ScriptableObjectLoader.TryGetLoadScriptableObject<DialogueDirectingResourceJsonDataSO>(this.resourceJsonDataSOPath, out var dialogueDirectingResourceJsonDataSO))
-            {
-                Debug.Log($"해당 연출 Index에 대응되는 필요 리소스정보들이 담긴 SO를 가져오지 못함.");
-                return;
-            }
-            this.DialogueDirectingResourceJsonDataSO = dialogueDirectingResourceJsonDataSO;
 
             // 연출 서비스에서 필요로하는 Prefab 리소스 정보 SO를 가져오지 못한 경우 리턴.
             if (!ScriptableObjectLoader.TryGetLoadScriptableObject<DialogueDirectingPrefabDataSO>(this.prefabSOPath, out var dialogueDirectingPrefabDataSO))
@@ -55,76 +49,49 @@ namespace GameSystems.DialogueDirectingService.Generator
             }
             this.DialogueDirectingPrefabDataSO = dialogueDirectingPrefabDataSO;
         }
-
-        // 특정 연출 Index에 대응되는 ViewObject를 미리 설정해 놓습니다.
-        public void SetDialogueResource(int dialogueIndex)
+        
+        public bool TryGenerateViewObject(string prefabKey, string viewObjectKey)
         {
-            JsonFileConverter JsonFileConverter = new();
 
-            // 해당 연출 Index에 대응되는 필요 리소스정보 Json 파일을 가져오지 못한 경우 리턴.
-            if (!this.DialogueDirectingResourceJsonDataSO.TryGetDialogueDirectingResourceJsonData(dialogueIndex, out var dialogueDirectingResourceJsonData))
+            // PrefabKey 값에 대응되는 prefab 정보를 가져옴.
+            if (!this.DialogueDirectingPrefabDataSO.TryGetPrefabData(prefabKey, out var dialogueDirectingPrefabData))
             {
-                Debug.Log($"해당 연출 Index에 대응되는 필요 리소스정보 Json 파일을 가져오지 못함.");
-                return;
-            }
-
-            // 가져온 Json 파일을 Data로 파싱.
-            if(!JsonFileConverter.TryParseJsonToData<DialogueDirectingResourceData>(dialogueDirectingResourceJsonData.JsonFile, out var dialogueDirectingResourceData))
-            {
-                Debug.LogError("jsonFile이 비어있습니다.");
-                return;
+                Debug.Log($"SO에 Key에 대응되는 Prefab이 등록되어 있지 않습니다.");
+                return false;
             }
 
-            FadeInAndOutService fadeInAndOutService = new();
+            // Prefab 정보를 통해서, 인스턴스 생성.
+            var newOutputViewObject = MonoBehaviour.Instantiate(dialogueDirectingPrefabData.Prefab, dialogueDirectingPrefabData.PrefabParent);
+            // GameObject 객체 등록.
+            this.DialogueViewObjectData.RegisterViewObject(viewObjectKey, newOutputViewObject);
 
-            // CanvasUIUX Generate
-            if (dialogueDirectingResourceData.TryGetCanvasUIUXKeys(out var canvasUIUXs))
-            {
-                foreach (var key in canvasUIUXs)
-                {
-                    if (this.DialogueDirectingPrefabDataSO.TryGetPrefabData(key, out var prefabData))
-                    {
-                        this.GenerateViewObject(prefabData, fadeInAndOutService);
-                    }
-                }
-            }
-            // Actor Generate
-            if (dialogueDirectingResourceData.TryGetActorKeys(out var actorKeys))
-            {
-                foreach(var key in actorKeys)
-                {
-                    if(this.DialogueDirectingPrefabDataSO.TryGetPrefabData(key, out var prefabData))
-                    {
-                        this.GenerateViewObject(prefabData, fadeInAndOutService);
-                    }
-                }
-            }
-            // Sprite Generate
-            if (dialogueDirectingResourceData.TryGetSpriteKeys(out var spriteKeys))
-            {
-                foreach (var key in spriteKeys)
-                {
-                    if (this.DialogueDirectingPrefabDataSO.TryGetPrefabData(key, out var prefabData))
-                    {
-                        this.GenerateViewObject(prefabData, fadeInAndOutService);
-                    }
-                }
-            }
+            // outputView 객체가 필요로하는 공통 기능 참조전달.
+            var newOutputView = newOutputViewObject.GetComponent<IDialogueOutputViewBinding>();
+            if (newOutputView != null)
+                newOutputView.InitialBinding(viewObjectKey, this.MultiPlugInHub, this.fadeInAndOutService);
+
+            return true;
         }
-
-        public void ResetDialogueService()
+        public bool TryGenerateViewObject(string prefabkey)
         {
+            // PrefabKey 값에 대응되는 prefab 정보를 가져옴.
+            if (!this.DialogueDirectingPrefabDataSO.TryGetPrefabData(prefabkey, out var dialogueDirectingPrefabData))
+            {
+                Debug.Log($"SO에 Key에 대응되는 Prefab이 등록되어 있지 않습니다.");
+                return false;
+            }
 
-        }
+            // Prefab 정보를 통해서, 인스턴스 생성.
+            var newOutputViewObject = MonoBehaviour.Instantiate(dialogueDirectingPrefabData.Prefab, dialogueDirectingPrefabData.PrefabParent);
+            // GameObject 객체 등록.
+            this.DialogueViewObjectData.RegisterViewObject(prefabkey, newOutputViewObject);
 
-        public void GenerateViewObject(DialogueDirectingPrefabData dialogueDirectingPrefabData, FadeInAndOutService fadeInAndOutService)
-        {
-            GameObject newViewPrefab = MonoBehaviour.Instantiate(dialogueDirectingPrefabData.Prefab, dialogueDirectingPrefabData.PrefabParent);
-            this.DialogueViewObjectData.RegisterViewObject(dialogueDirectingPrefabData.PrefabKey, newViewPrefab);
+            // outputView 객체가 필요로하는 공통 기능 참조전달.
+            var newOutputView = newOutputViewObject.GetComponent<IDialogueOutputViewBinding>();
+            if (newOutputView != null)
+                newOutputView.InitialBinding(prefabkey, this.MultiPlugInHub, this.fadeInAndOutService);
 
-            var newOutputView = newViewPrefab.GetComponent<IDialogueOutputViewBinding>();
-            if(newOutputView != null)
-                newOutputView.InitialBinding(dialogueDirectingPrefabData.PrefabKey, this.DialogueViewObjectData, fadeInAndOutService);
+            return true;
         }
     }
 }

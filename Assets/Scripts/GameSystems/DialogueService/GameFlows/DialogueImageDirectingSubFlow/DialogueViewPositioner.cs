@@ -3,9 +3,8 @@ using System.Linq;
 
 using UnityEngine;
 
-using Foundations.PlugInHub;
-
 using GameSystems.DialogueDirectingService.Datas;
+using GameSystems.DialogueDirectingService.Views;
 
 
 namespace GameSystems.DialogueDirectingService.GameFlow
@@ -18,17 +17,17 @@ namespace GameSystems.DialogueDirectingService.GameFlow
 
     public class DialogueViewPositioner : IDialogueViewPositioner
     {
-        private IMultiPlugInHub DialogueViewModel;
+        private IDialogueViewObjectDataHandler DialogueViewObjectDataHandler;
 
-        public DialogueViewPositioner(IMultiPlugInHub multiPlugInHub)
+        public DialogueViewPositioner(IDialogueViewObjectDataHandler dialogueViewObjectDataHandler)
         {
-            this.DialogueViewModel = multiPlugInHub;
+            this.DialogueViewObjectDataHandler = dialogueViewObjectDataHandler;
         }
 
         // 기능
         public bool TryDirectPosition(string key, string directingContent)
         {
-            if (!this.DialogueViewModel.TryGetPlugIn<IPositioner>(key, out var viewObject)) return false;
+            if (!this.DialogueViewObjectDataHandler.TryGetPlugIn<IPositioner>(key, out var viewObject)) return false;
             if (!this.TryParsePosition(directingContent, out var pos)) return false;
 
             viewObject.DirectPosition(pos);
@@ -61,10 +60,10 @@ namespace GameSystems.DialogueDirectingService.GameFlow
             enumerator = null;
             behaviourToken = null;
 
-            if (!this.DialogueViewModel.TryGetPlugIn<IPositioner>(key, out var viewObject)) return false;
+            if (!this.DialogueViewObjectDataHandler.TryGetPlugIn<IPositioner>(key, out var viewObject)) return false;
             if (!this.TryParseMoveValue(directingContent, out var parsedPositions, out var parsedDurations)) return false;
 
-            behaviourToken = new DTOs.BehaviourToken(false);
+            behaviourToken = new BehaviourToken(false);
             enumerator = viewObject.Move(parsedPositions, parsedDurations, behaviourToken);
             return true;
         }

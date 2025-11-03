@@ -11,11 +11,10 @@ namespace GameSystems.DialogueDirectingService
     public class DialogueDirectingService : MonoBehaviour
     {
         // 연출 시스템에서 사용되는 ViewModel
-        private DialogueViewObjectData DialogueViewObjectData;
+        private DialogueViewObjectDataHandler DialogueViewObjectDataHandler;
         private DialogueDirectingControlData DialogueDirectingControlData;
 
         // DialogueViewModel의 생명주기를 담당하는 객체
-        private DialogueViewObjectGenerator DialogueViewObjectGenerator;
         private DialogueDirectingControlDataGenerator DialogueDirectingControlDataGenerator;
 
         // 연출에 사용되는 상위 GameFlow
@@ -42,13 +41,12 @@ namespace GameSystems.DialogueDirectingService
 
         public DialogueDirectingService()
         {
-            this.DialogueViewObjectData = new();
+            this.DialogueViewObjectDataHandler = new();
             this.DialogueDirectingControlData = new();
 
-            this.DialogueViewObjectGenerator = new(this.DialogueViewObjectData);
             this.DialogueDirectingControlDataGenerator = new(this.DialogueDirectingControlData);
 
-            this.DialogueDirectingMainFlow = new(this.DialogueViewObjectData, this.DialogueDirectingControlData, this.CoroutineRunner);
+            this.DialogueDirectingMainFlow = new(this.DialogueViewObjectDataHandler, this.DialogueDirectingControlData, this.CoroutineRunner);
             this.DialogueDirectingInputController.InitialSetting(this.DialogueDirectingControlData, this.DialogueDirectingMainFlow);
         }
        
@@ -58,7 +56,6 @@ namespace GameSystems.DialogueDirectingService
             if (this.IsDialogueServiceSetting) return;
             else this.IsDialogueServiceSetting = true;
 
-            this.DialogueViewObjectGenerator.SetDialogueResource(0);
             this.DialogueDirectingControlDataGenerator.SetDialogueResoruce(0);
         }
 

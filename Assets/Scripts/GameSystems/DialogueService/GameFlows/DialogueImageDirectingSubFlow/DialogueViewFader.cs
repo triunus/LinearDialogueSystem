@@ -2,10 +2,8 @@
 
 using UnityEngine;
 
-using Foundations.PlugInHub;
-
 using GameSystems.DialogueDirectingService.Datas;
-
+using GameSystems.DialogueDirectingService.Views;
 
 namespace GameSystems.DialogueDirectingService.GameFlow
 {
@@ -17,43 +15,38 @@ namespace GameSystems.DialogueDirectingService.GameFlow
 
     public class DialogueViewFader : IDialogueViewFader
     {
-        private IMultiPlugInHub DialogueViewModel;
+        private IDialogueViewObjectDataHandler DialogueViewObjectDataHandler;
 
-        public DialogueViewFader(IMultiPlugInHub multiPlugInHub)
+        public DialogueViewFader(IDialogueViewObjectDataHandler dialogueViewObjectDataHandler)
         {
-            this.DialogueViewModel = multiPlugInHub;
+            this.DialogueViewObjectDataHandler = dialogueViewObjectDataHandler;
         }
 
         // 기능.
         public bool TryFadeIn(string key, string faderContent, out IEnumerator enumerator, out BehaviourToken behaviourToken)
         {
+
             enumerator = null;
             behaviourToken = null;
 
-            if (this.DialogueViewModel.TryGetPlugIn<IFadeInAndOut>(key, out var viewObject))
-            {
-                if (!this.TryParseDuration(faderContent, out var duration)) return false;
+            if (!this.DialogueViewObjectDataHandler.TryGetPlugIn<IFadeInAndOut>(key, out var viewObject)) return false;
+            if (!this.TryParseDuration(faderContent, out var duration)) return false;
 
-                behaviourToken = new BehaviourToken(isRequestEnd: false);
-                enumerator = viewObject.FadeIn(duration, behaviourToken);
-                return true;
-            }
-            else return false;
+            behaviourToken = new BehaviourToken(isRequestEnd: false);
+            enumerator = viewObject.FadeIn(duration, behaviourToken);
+            return true;
         }
         public bool TryFadeOut(string key, string faderContent, out IEnumerator enumerator, out BehaviourToken behaviourToken)
         {
             enumerator = null;
             behaviourToken = null;
 
-            if (this.DialogueViewModel.TryGetPlugIn<IFadeInAndOut>(key, out var viewObject))
-            {
-                if (!this.TryParseDuration(faderContent, out var duration)) return false;
+            if (!this.DialogueViewObjectDataHandler.TryGetPlugIn<IFadeInAndOut>(key, out var viewObject)) return false;
+            if (!this.TryParseDuration(faderContent, out var duration)) return false;
 
-                behaviourToken = new BehaviourToken(isRequestEnd: false);
-                enumerator = viewObject.FadeOut(duration, behaviourToken);
-                return true;
-            }
-            else return false;
+            behaviourToken = new BehaviourToken(isRequestEnd: false);
+            enumerator = viewObject.FadeOut(duration, behaviourToken);
+            return true;
         }
 
         private bool TryParseDuration(string faderContent, out float duration)

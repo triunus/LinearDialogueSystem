@@ -1,4 +1,5 @@
-﻿using Foundations.PlugInHub;
+﻿using GameSystems.DialogueDirectingService.Datas;
+using GameSystems.DialogueDirectingService.Views;
 
 namespace GameSystems.DialogueDirectingService.GameFlow
 {
@@ -10,24 +11,24 @@ namespace GameSystems.DialogueDirectingService.GameFlow
 
     public class DialogueViewActivator : IDialogueViewActivator
     {
-        private IMultiPlugInHub DialogueViewModel;
+        private IDialogueViewObjectDataHandler DialogueViewObjectDataHandler;
 
-        public DialogueViewActivator(IMultiPlugInHub multiPlugInHub)
+        public DialogueViewActivator(IDialogueViewObjectDataHandler dialogueViewObjectDataHandler)
         {
-            this.DialogueViewModel = multiPlugInHub;
+            this.DialogueViewObjectDataHandler = dialogueViewObjectDataHandler;
         }
 
         // 기능.
         public bool TryDirectShow(string key)
         {
-            if (this.DialogueViewModel.TryGetPlugIn<IActivation>(key, out var viewObject)) return false;
+            if (!this.DialogueViewObjectDataHandler.TryGetPlugIn<IActivation>(key, out var viewObject)) return false;
 
             viewObject.Show();
             return true;
         }
         public bool TryDirectHide(string key)
         {
-            if (this.DialogueViewModel.TryGetPlugIn<IActivation>(key, out var viewObject)) return false;
+            if (!this.DialogueViewObjectDataHandler.TryGetPlugIn<IActivation>(key, out var viewObject)) return false;
 
             viewObject.Hide();
             return true;

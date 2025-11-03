@@ -1,7 +1,5 @@
-﻿using Foundations.PlugInHub;
-
-using GameSystems.DialogueDirectingService.Datas;
-
+﻿using GameSystems.DialogueDirectingService.Datas;
+using GameSystems.DialogueDirectingService.Views;
 
 namespace GameSystems.DialogueDirectingService.GameFlow
 {
@@ -14,17 +12,17 @@ namespace GameSystems.DialogueDirectingService.GameFlow
 
     public class DialogueViewSpriteSetter : IDialogueViewSpriteSetter
     {
-        private IMultiPlugInHub DialogueViewModel;
+        private IDialogueViewObjectDataHandler DialogueViewObjectDataHandler;
 
-        public DialogueViewSpriteSetter(IMultiPlugInHub multiPlugInHub)
+        public DialogueViewSpriteSetter(IDialogueViewObjectDataHandler dialogueViewObjectDataHandler)
         {
-            this.DialogueViewModel = multiPlugInHub;
+            this.DialogueViewObjectDataHandler = dialogueViewObjectDataHandler;
         }
 
         // 기능
         public bool TrySetAttitudeTexture2D(string key, string directContent)
         {
-            if (!this.DialogueViewModel.TryGetPlugIn<ISpriteSetter>(key, out var viewObject)) return false;
+            if (!this.DialogueViewObjectDataHandler.TryGetPlugIn<ISpriteSetter>(key, out var viewObject)) return false;
 
             AttitudeType attitudeType = (AttitudeType)System.Enum.Parse(typeof(AttitudeType), directContent);
 
@@ -33,7 +31,7 @@ namespace GameSystems.DialogueDirectingService.GameFlow
         }
         public bool TrySetFaceTexture2D(string key, string directContent)
         {
-            if (!this.DialogueViewModel.TryGetPlugIn<ISpriteSetter>(key, out var viewObject)) return false;
+            if (!this.DialogueViewObjectDataHandler.TryGetPlugIn<ISpriteSetter>(key, out var viewObject)) return false;
 
             FaceType faceType = (FaceType)System.Enum.Parse(typeof(FaceType), directContent);
 
@@ -42,7 +40,7 @@ namespace GameSystems.DialogueDirectingService.GameFlow
         }
         public bool TrySetSpeakerAndListenerColor(string speakerKey)
         {
-            if (!this.DialogueViewModel.TryGetAllPlugIn<ISpriteSetter>(out var viewObjects)) return false;
+            if (!this.DialogueViewObjectDataHandler.TryGetAllPlugIn<ISpriteSetter>(out var viewObjects)) return false;
 
             if (speakerKey.Equals("Player"))
             {
@@ -53,7 +51,7 @@ namespace GameSystems.DialogueDirectingService.GameFlow
             }
             else
             {
-                if (!this.DialogueViewModel.TryGetPlugIn<ISpriteSetter>(speakerKey, out var viewObject)) return false;
+                if (!this.DialogueViewObjectDataHandler.TryGetPlugIn<ISpriteSetter>(speakerKey, out var viewObject)) return false;
 
                 foreach (var plugIn in viewObjects)
                 {

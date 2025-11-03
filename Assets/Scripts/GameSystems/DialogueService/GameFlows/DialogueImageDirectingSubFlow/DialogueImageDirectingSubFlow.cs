@@ -2,7 +2,6 @@ using System.Collections;
 
 using UnityEngine;
 
-using Foundations.PlugInHub;
 using GameSystems.DialogueDirectingService.Datas;
 
 namespace GameSystems.DialogueDirectingService.GameFlow
@@ -20,12 +19,12 @@ namespace GameSystems.DialogueDirectingService.GameFlow
         private IDialogueViewSpriteSetter DialogueViewSpriteSetter;
         private IDialogueViewPositioner DialogueViewPositioner;
 
-        public DialogueImageDirectingSubFlow(IMultiPlugInHub DialogueViewModel)
+        public DialogueImageDirectingSubFlow(IDialogueViewObjectDataHandler dialogueViewObjectDataHandler)
         {
-            this.DialogueViewActivator = new DialogueViewActivator(DialogueViewModel);
-            this.DialogueViewFader = new DialogueViewFader(DialogueViewModel);
-            this.DialogueViewSpriteSetter = new DialogueViewSpriteSetter(DialogueViewModel);
-            this.DialogueViewPositioner = new DialogueViewPositioner(DialogueViewModel);
+            this.DialogueViewActivator = new DialogueViewActivator(dialogueViewObjectDataHandler);
+            this.DialogueViewFader = new DialogueViewFader(dialogueViewObjectDataHandler);
+            this.DialogueViewSpriteSetter = new DialogueViewSpriteSetter(dialogueViewObjectDataHandler);
+            this.DialogueViewPositioner = new DialogueViewPositioner(dialogueViewObjectDataHandler);
         }
 
         public bool TryAction(string directingContent, out IEnumerator resultEnumerator, out BehaviourToken behaviourToken)

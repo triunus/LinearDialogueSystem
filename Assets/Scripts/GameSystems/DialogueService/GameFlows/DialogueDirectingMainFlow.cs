@@ -27,7 +27,7 @@ namespace GameSystems.DialogueDirectingService.GameFlow
 
         private IDialogueDirectingContentRepository DialogueDirectingControlData;
 
-        public DialogueDirectingMainFlow(IMultiPlugInHub multiPlugInHub,
+        public DialogueDirectingMainFlow(IDialogueViewObjectDataHandler dialogueViewObjectDataHandler,
             IDialogueDirectingContentRepository dialogueDirectingControlData,
             ICoroutineRunner coroutineRunner)
         {
@@ -35,7 +35,7 @@ namespace GameSystems.DialogueDirectingService.GameFlow
 
             this.CoroutineRunner = coroutineRunner;
 
-            this.DialogueImageDirectingSubFlow = new DialogueImageDirectingSubFlow(multiPlugInHub);
+            this.DialogueImageDirectingSubFlow = new DialogueImageDirectingSubFlow(dialogueViewObjectDataHandler);
         }
 
 
