@@ -35,7 +35,7 @@ namespace GameSystems.DialogueDirectingService.GameFlow
 
             this.CoroutineRunner = coroutineRunner;
 
-            this.DialogueImageDirectingSubFlow = new DialogueImageDirectingSubFlow(dialogueViewObjectDataHandler);
+            this.DialogueImageDirectingSubFlow = new DialogueDirectingViewFacade(dialogueViewObjectDataHandler);
         }
 
 

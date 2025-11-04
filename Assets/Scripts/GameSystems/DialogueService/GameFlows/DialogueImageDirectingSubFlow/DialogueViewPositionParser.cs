@@ -1,39 +1,19 @@
-﻿using System.Collections;
-using System.Linq;
+﻿using System.Linq;
 
 using UnityEngine;
-
-using GameSystems.DialogueDirectingService.Datas;
-using GameSystems.DialogueDirectingService.Views;
-
 
 namespace GameSystems.DialogueDirectingService.GameFlow
 {
     public interface IDialogueViewPositioner
     {
-        public bool TryDirectPosition(string key, string directingContent);
-        public bool TryMove(string key, string directingContent, out IEnumerator enumerator, out BehaviourToken behaviourToken);
+        public bool TryParsePosition(string directingContent, out Vector3 position);
+        public bool TryParseMoveValue(string directingContent, out Vector3[] positions, out float[] durations);
     }
 
-    public class DialogueViewPositioner : IDialogueViewPositioner
+    public class DialogueViewPositionParser : IDialogueViewPositioner
     {
-        private IDialogueViewObjectDataHandler DialogueViewObjectDataHandler;
-
-        public DialogueViewPositioner(IDialogueViewObjectDataHandler dialogueViewObjectDataHandler)
-        {
-            this.DialogueViewObjectDataHandler = dialogueViewObjectDataHandler;
-        }
-
         // 기능
-        public bool TryDirectPosition(string key, string directingContent)
-        {
-            if (!this.DialogueViewObjectDataHandler.TryGetPlugIn<IPositioner>(key, out var viewObject)) return false;
-            if (!this.TryParsePosition(directingContent, out var pos)) return false;
-
-            viewObject.DirectPosition(pos);
-            return true;
-        }
-        private bool TryParsePosition(string directingContent, out Vector3 position)
+        public bool TryParsePosition(string directingContent, out Vector3 position)
         {
             string[] parsedContent = directingContent.Split('_');
 
@@ -55,19 +35,7 @@ namespace GameSystems.DialogueDirectingService.GameFlow
             return true;
         }
 
-        public bool TryMove(string key, string directingContent, out IEnumerator enumerator, out BehaviourToken behaviourToken)
-        {
-            enumerator = null;
-            behaviourToken = null;
-
-            if (!this.DialogueViewObjectDataHandler.TryGetPlugIn<IPositioner>(key, out var viewObject)) return false;
-            if (!this.TryParseMoveValue(directingContent, out var parsedPositions, out var parsedDurations)) return false;
-
-            behaviourToken = new BehaviourToken(false);
-            enumerator = viewObject.Move(parsedPositions, parsedDurations, behaviourToken);
-            return true;
-        }
-        private bool TryParseMoveValue(string directingContent, out Vector3[] positions, out float[] durations)
+        public bool TryParseMoveValue(string directingContent, out Vector3[] positions, out float[] durations)
         {
             positions = default;
             durations = default;

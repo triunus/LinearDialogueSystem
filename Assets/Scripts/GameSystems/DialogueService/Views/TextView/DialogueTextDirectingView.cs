@@ -6,40 +6,33 @@ using GameSystems.DialogueDirectingService.Datas;
 
 namespace GameSystems.DialogueDirectingService.Views
 {
-    public interface IDialogueTextDirectingView
-    {
-        public bool TryDirectTextDisplayOperation(string directingContent, out IEnumerator enumerator, out BehaviourToken behaviourToken);
-    }
-
     // TextDisplay
-    public class DialogueTextDirectingView : MonoBehaviour, IDialogueTextDirectingView
+    public class DialogueTextDirectingView : MonoBehaviour, ITextDisplayer
     {
         [SerializeField] private TextMeshProUGUI SpeakerTextUI;
         [SerializeField] private TextMeshProUGUI DialogueTextUI;
 
         [SerializeField] private float charsPerSecond = 20;
 
-        public bool TryDirectTextDisplayOperation(string directingContent, out IEnumerator enumerator, out BehaviourToken behaviourToken)
+        public IEnumerator TextDisplay(string speaker, string content, BehaviourToken behaviourToken)
         {
-            enumerator = null;
-            behaviourToken = null;
-            if (this.DialogueTextUI == null || this.SpeakerTextUI == null) return false;
-            // Parsing 실패.
-            if (!this.TryParseTextContent(directingContent, out var parsedContent)) return false;
+            if (this.DialogueTextUI == null || this.SpeakerTextUI == null)
+            {
+                Debug.Log($"Text UIUX 관련 SerializeField 연결 오류");
+                return default;
+            }
 
             // 초기화.
             this.SpeakerTextUI.text = string.Empty;
             this.DialogueTextUI.text = string.Empty;
 
             // 화자 이름 등록.
-            this.SpeakerTextUI.text = parsedContent[1];
+            this.SpeakerTextUI.text = speaker;
 
-            behaviourToken = new BehaviourToken(isRequestEnd : false);
-            // 대사 출력 IEnumerator 할당
-            enumerator = this.OperateDialogueTextDisplay(parsedContent[2], this.charsPerSecond, behaviourToken);
-
-            return true;
+            // 대사 출력.
+            return this.OperateDialogueTextDisplay(content, this.charsPerSecond, behaviourToken);
         }
+
         private IEnumerator OperateDialogueTextDisplay(string content, float charPerSecond, BehaviourToken behaviourToken)
         {
             // 출력 속도 값이 잘못되어 있으면, 20f으로 변경.
@@ -67,14 +60,6 @@ namespace GameSystems.DialogueDirectingService.Views
             }
 
             this.DialogueTextUI.text = content;
-        }
-
-        private bool TryParseTextContent(string directingContent, out string[] parsedContent)
-        {
-            parsedContent = directingContent.Split('_');
-
-            if (parsedContent.Length != 3) return false;
-            else return true;
         }
     }
 }

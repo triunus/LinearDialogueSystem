@@ -72,16 +72,19 @@ namespace GameSystems.DialogueDirectingService.Datas
     {
         None = 0,
 
-        FadeIn = 50,
-        FadeOut = 51,
         DirectShow = 1,
         DirectHide = 2,
+
+        FadeIn = 50,
+        FadeOut = 51,
+
+        SetFaceSprite = 200,
+        SetAttitudeSprite = 210,
 
         SetPosition = 100,
         Move = 110,
 
-        SetFaceSprite = 200,
-        SetAttitudeSprite = 210,
+        SetTextDisplay = 300,
     }
     [System.Serializable]
     public enum NextDirectiveCommandType
