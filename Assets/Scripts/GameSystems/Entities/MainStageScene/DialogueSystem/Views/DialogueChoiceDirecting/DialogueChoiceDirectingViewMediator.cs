@@ -1,71 +1,111 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
 
-using GameSystems.GameFlows.MainStageScene;
+using Foundations.PlugInHub;
+using GameSystems.DialogueDirectingService.PlainServices;
+using GameSystems.DialogueDirectingService.Datas;
 
-namespace GameSystems.Entities.MainStageScene
+namespace GameSystems.DialogueDirectingService.Views
 {
-    public interface IDialogueChoiceDirectingViewMediator
+    public interface IChoiceButtonOnClicked
     {
-        public bool TryDirectChoiceViewOperation(string directingContent, out IEnumerator enumerator, out DTOs.BehaviourToken behaviourToken);
-        public void OnClicekdChoiceButton(int choiceButtonIndex);
+        public bool IsBlockedState { get; }
+
+        public string ChoiceButtonKey { get; }
+        public int NextBranchPoint { get; }
     }
 
-    public class DialogueChoiceDirectingViewMediator : MonoBehaviour, IDialogueChoiceDirectingViewMediator, IEntity
+    public class DialogueDirectingChoiceButtonView : MonoBehaviour, IChoiceButtonSetter, IChoiceButtonOnClicked
     {
-        private IDialogueDirectingGameFlow DialogueDirectingSystemGameFlow;
+        [SerializeField] private GameObject ChoiceButtonObject;
+        [SerializeField] private Image ButtonContentParent;
+        [SerializeField] private TextMeshProUGUI ButtonContent;
 
-        [SerializeField] private GameObject ChoiceButtonPrefab;
-        [SerializeField] private RectTransform ChoiceButtonParent;
-
-        private List<IDialogueChoiceButtonView> ChoiceButtonViews = new();
-
-        private bool isButtonClickBlocked;
+        private Dictionary<string, bool> ConditionCheckSet;
+        private bool isClickedOnce;
+        
         private float safeWaitDuration = 0.3f;
         private float currentWaitDuration = 0f;
 
-        private void Awake()
+        public string ChoiceButtonKey { get; set; }
+        public int NextBranchPoint { get; set; }
+        public bool IsBlockedState { get; set; }
+
+        public void InitialBinding(string key, IMultiPlugInHub multiPlugInHub, IFadeInAndOutService fadeInAndOutService = null)
         {
-            var LocalRepository = Repository.MainStageSceneRepository.Instance;
+            this.ChoiceButtonKey = key;
 
-            LocalRepository.Entity_LazyReferenceRepository.RegisterReference<DialogueChoiceDirectingViewMediator>(this);
+            multiPlugInHub.RegisterPlugIn<IChoiceButtonSetter>(key, this);
 
-            this.DialogueDirectingSystemGameFlow = LocalRepository.GameFlow_LazyReferenceRepository.
-                GetOrWaitReference<DialogueDirectingGameFlow>(x => this.DialogueDirectingSystemGameFlow = x);
+            this.ConditionCheckSet = new();
+
+            this.IsBlockedState = true;
         }
 
-        public void InitialSetting()
+        public void SetCondition(string[] needSelectButtonKeys)
         {
+            foreach (string otherButtonKey in needSelectButtonKeys)
+            {
+                if (this.ConditionCheckSet.ContainsKey(otherButtonKey)) continue;
 
+                this.ConditionCheckSet.Add(otherButtonKey, false);
+            }
         }
 
-        public bool TryDirectChoiceViewOperation(string directingContent, out IEnumerator enumerator, out DTOs.BehaviourToken behaviourToken)
-        {
-            enumerator = null;
-            behaviourToken = null;
-
-            // Parsing 실패 시, 종료
-            if (!this.TryParseChoiceContent(directingContent, out var parsedContent)) return false;
-            // 사용 가능한 ButtonView 못 가져오면, 종료.
-            if (!this.TryGetUseableDialogueChoiceButtonView(out var dialogueChoiceButtonView)) return false;
-
-            behaviourToken = new DTOs.BehaviourToken(isRequestEnd: false);
-            enumerator = this.OperateDialogueChoiceDisplay(dialogueChoiceButtonView, parsedContent[0], int.Parse(parsedContent[1]), behaviourToken);
-            return true;
-        }
-        private IEnumerator OperateDialogueChoiceDisplay(IDialogueChoiceButtonView view, string choiceContent, int jumpDirectingIndex, DTOs.BehaviourToken behaviourToken)
+        public IEnumerator OperateChoiceButtonDisplay(string content, int nextBranchPoint, BehaviourToken behaviourToken)
         {
             // 버튼이 잘못 입력 되지 않도록 잠시 차단.
-            this.isButtonClickBlocked = true;
+            this.IsBlockedState = true;
 
-            // 해당 선택지 GameObject 활성화.
-            view.ActivateObject(true);
+            // 조건이 null이면, 바로 true
+            if(this.ConditionCheckSet == null)
+            {
+                // 해당 선택지 GameObject 활성화.
+                this.ChoiceButtonObject.SetActive(true);
 
-            // 선택지 내용 갱신.
-            view.SetChoiceContent(choiceContent);
-            // 선택지 버튼 연결 갱신
-            view.UpdateButtonConnect(() => this.OnClicekdChoiceButton(jumpDirectingIndex));
+                // 한번 클릭된 버튼의 경우 색 변경.
+                if (this.isClickedOnce)
+                {
+                    this.ButtonContentParent.color = new Color(225, 225, 225, 255);
+                    this.ButtonContent.color = new Color(0, 0, 0, 200);
+                }
+                // 버튼 색 설정.
+                else
+                {
+                    this.ButtonContentParent.color = new Color(255, 255, 255, 255);
+                    this.ButtonContent.color = new Color(0, 0, 0, 255);
+                }
+            }
+            else
+            {
+                // 조건 만족한 경우
+                if (this.isConditionMet())
+                {
+                    // 해당 선택지 GameObject 활성화.
+                    this.ChoiceButtonObject.SetActive(true);
+
+                    // 한번 클릭된 버튼의 경우 색 변경.
+                    if (this.isClickedOnce)
+                    {
+                        this.ButtonContentParent.color = new Color(225, 225, 225, 255);
+                        this.ButtonContent.color = new Color(0, 0, 0, 200);
+                    }
+                    // 버튼 색 설정.
+                    else
+                    {
+                        this.ButtonContentParent.color = new Color(255, 255, 255, 255);
+                        this.ButtonContent.color = new Color(0, 0, 0, 255);
+                    }
+                }
+            }
+
+            // 선택지 내용 설정.
+            this.ButtonContent.text = content;
+            // 버튼 분기 설정
+            this.NextBranchPoint = nextBranchPoint;
 
             // 안전하게 일정 시각 경과 후
             while (this.currentWaitDuration < this.safeWaitDuration)
@@ -77,76 +117,47 @@ namespace GameSystems.Entities.MainStageScene
             }
 
             // 버튼 차단 해제.
-            this.isButtonClickBlocked = false;
+            this.IsBlockedState = false;
             this.currentWaitDuration = 0;
         }
 
-        private bool TryParseChoiceContent(string directingContent, out string[] parsedContent)
+        private bool isConditionMet()
         {
-            parsedContent = directingContent.Split('_');
-
-            if (parsedContent.Length == 2) return true;
-            else return false;
-        }
-        private bool TryGetUseableDialogueChoiceButtonView(out IDialogueChoiceButtonView DialogueChoiceButtonView)
-        {
-            DialogueChoiceButtonView = null;
-
-            foreach (var view in this.ChoiceButtonViews)
+            foreach (var data in this.ConditionCheckSet)
             {
-                // 가장 맨 앞의 사용가능한 View를 리턴.
-                if (view.IsUseable)
-                {
-                    view.IsUseable = false;
-                    DialogueChoiceButtonView = view;
-                    return true;
-                }
+                if (data.Value == false)
+                    return false;
             }
-
-            // 현재 갖고 있는 View를 다 사용 중인 경우, 새로 하나 만들어서 반환
-            GameObject newChoiceButton = Instantiate(this.ChoiceButtonPrefab, this.ChoiceButtonParent);
-
-            // GameObject 생성 오류
-            if (newChoiceButton == null)
-            {
-                Debug.Log($"버튼 Prefab이 없음.");
-                return false;
-            }
-
-            IDialogueChoiceButtonView newDialogueChoiceButtonView = newChoiceButton.GetComponent<IDialogueChoiceButtonView>();
-
-            // 컴포넌트 참조 오류
-            if (newDialogueChoiceButtonView == null)
-            {
-                Debug.Log($"Prefab에 View 컴포넌트 할당 안함.");
-                return false;
-            }
-
-            this.ChoiceButtonViews.Add(newDialogueChoiceButtonView);
-            newDialogueChoiceButtonView.IsUseable = false;
-
-            DialogueChoiceButtonView = newDialogueChoiceButtonView;
 
             return true;
         }
 
-        public void OnClicekdChoiceButton(int choiceButtonIndex)
+        public void UpdateChoiceButtonView(string selectedButtonKey)
         {
-            // Block 되어 있으면 차단.
-            if (this.isButtonClickBlocked) return;
-
-            // 버튼 클릭 입력 들어오면 Block
-            this.isButtonClickBlocked = true;
-
-            // 버튼 비활성화 및 초기화.
-            foreach(var view in this.ChoiceButtonViews)
+            // 내가 갖는 조건에 들어가는 버튼이 클릭되었다면, 기록.
+            if (this.ConditionCheckSet.ContainsKey(selectedButtonKey))
             {
-                view.ActivateObject(false);
-                view.IsUseable = true;
+                this.ConditionCheckSet[selectedButtonKey] = true;
             }
 
-            // 여기서 대화 연출 시스템 기능 부분으로 연결.
-            this.DialogueDirectingSystemGameFlow.OperateDialogueDirecting(choiceButtonIndex);
+            // 내가 클릭된 거면, 깜빡임.
+            if(this.ChoiceButtonKey == selectedButtonKey)
+            {
+                // 한번 클릭됨 명시.
+                this.isClickedOnce = true;
+                
+                this.ButtonContentParent.color = new Color(255, 255, 255, 255);
+                this.ButtonContent.color = new Color(0, 0, 0, 255);
+            }
+            // 다른 버튼이 클릭된 거면,
+            else
+            {
+                this.ButtonContentParent.color = new Color(150, 150, 150, 200);
+                this.ButtonContent.color = new Color(0, 0, 0, 200);
+            }
+
+            // 해당 선택지 GameObject 비활성화.
+            this.ChoiceButtonObject.SetActive(false);
         }
     }
 }
