@@ -38,7 +38,6 @@ namespace GameSystems.DialogueDirectingService.Views
             this.BackGroundObject.SetActive(false);
         }
 
-
         public IEnumerator FadeIn(float duration, BehaviourToken behaviourToken)
         {
             this.FadeInAndOutService.SetAlphaValue(this.SpriteRenderers, this.HidedAlpha);
