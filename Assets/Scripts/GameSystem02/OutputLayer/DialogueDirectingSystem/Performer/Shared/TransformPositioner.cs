@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace GameSystems.OutputLayer.DialogueDirectingSystem
@@ -15,7 +16,7 @@ namespace GameSystems.OutputLayer.DialogueDirectingSystem
     public class TransformPositioner : MonoBehaviour, ITransformPositioner
     {
         [SerializeField] private Transform ActorRootTransform;
-        [SerializeField] private SpriteRenderer ActorSpriteRenderer;
+        [SerializeField] private List<SpriteRenderer> ActorSpriteRenderers;
 
         // 기본적으로 바라보는 방향 ( True : 좌 -> 우, False : 우 -> 좌 )
         [SerializeField] private bool defaultFacingRight;
@@ -46,9 +47,11 @@ namespace GameSystems.OutputLayer.DialogueDirectingSystem
                 // 움직이는 방향을 바라보도록 FilpX 
                 float directionX = end.x - start.x;
                 if (directionX >= 0)
-                    this.ActorSpriteRenderer.flipX = !this.defaultFacingRight;
+                    foreach(var data in this.ActorSpriteRenderers)
+                        data.flipX = !this.defaultFacingRight;
                 else
-                    this.ActorSpriteRenderer.flipX = this.defaultFacingRight;
+                    foreach (var data in this.ActorSpriteRenderers)
+                        data.flipX = this.defaultFacingRight;
 
                 while (elapsed < durations[i])
                 {
@@ -81,12 +84,14 @@ namespace GameSystems.OutputLayer.DialogueDirectingSystem
             // 오른쪽에 있으면 왼쪽을 보게
             if (currentX > cameraCenterX)
             {
-                this.ActorSpriteRenderer.flipX = defaultFacingRight;
+                foreach (var data in this.ActorSpriteRenderers)
+                    data.flipX = this.defaultFacingRight;
             }
             // 왼쪽에 있으면 오른쪽을 보게
             else
             {
-                this.ActorSpriteRenderer.flipX = !defaultFacingRight;
+                foreach (var data in this.ActorSpriteRenderers)
+                    data.flipX = !this.defaultFacingRight;
             }
         }
 

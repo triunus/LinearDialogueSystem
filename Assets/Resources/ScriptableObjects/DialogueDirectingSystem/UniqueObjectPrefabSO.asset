@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55102177d088c7e4f81b17f471a5817b, type: 3}
+  m_Name: UniqueObjectPrefabSO
+  m_EditorClassIdentifier: 
+  PrefabDatas:
+  - _Key: FixedBottomTextUI
+    _Prefab: {fileID: 9095636745964518708, guid: 797980c46cfca9847b132fa22a9ab5dc, type: 3}
+  - _Key: CutScene
+    _Prefab: {fileID: 9095636745964518708, guid: 797980c46cfca9847b132fa22a9ab5dc, type: 3}

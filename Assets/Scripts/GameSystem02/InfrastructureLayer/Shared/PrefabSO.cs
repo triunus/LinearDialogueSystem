@@ -7,6 +7,7 @@ namespace GameSystems.InfrastructureLayer.DialogueDirectingSystem
     public interface IPrefabSO
     {
         public bool TryGetPrefabData(string key, out GameObject prefab);
+        public IEnumerable<PrefabData> GetAllPrefabDatas { get; }
     }
 
     [Serializable]
@@ -27,6 +28,8 @@ namespace GameSystems.InfrastructureLayer.DialogueDirectingSystem
             }
             return false;
         }
+
+        public IEnumerable<PrefabData> GetAllPrefabDatas => this.PrefabDatas;
     }
 
     [Serializable]
